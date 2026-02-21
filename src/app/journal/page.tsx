@@ -18,17 +18,17 @@ interface JournalEntry {
 const mockEntries: JournalEntry[] = [
   {
     id: '1',
-    date: 'Today',
+    date: 'Сегодня',
     mood: 'good',
-    title: 'Morning reflection',
-    preview: 'Woke up feeling refreshed after trying the sleep meditation...',
+    title: 'Утреннее размышление',
+    preview: 'Проснулась отдохнувшей после медитации для сна...',
   },
   {
     id: '2',
-    date: 'Yesterday',
+    date: 'Вчера',
     mood: 'okay',
-    title: 'Work stress',
-    preview: 'Had a challenging day at work, used the SOS breathing...',
+    title: 'Рабочий стресс',
+    preview: 'Был сложный день на работе, использовала SOS дыхание...',
   },
 ];
 
@@ -50,7 +50,7 @@ export default function JournalPage() {
     router.push('/journal/new');
   };
 
-  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
   const today = new Date();
   const startOfWeek = new Date(today);
   startOfWeek.setDate(today.getDate() - today.getDay() + 1);
@@ -69,8 +69,8 @@ export default function JournalPage() {
       <header className="px-5 pt-4 pb-2 safe-area-top">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">My Journal</h1>
-            <p className="text-aura-slate/60">Track your emotional journey</p>
+            <h1 className="text-2xl font-bold text-foreground">Мой дневник</h1>
+            <p className="text-aura-slate/60">Отслеживай своё состояние</p>
           </div>
           <button className="h-10 w-10 rounded-xl bg-aura-mint flex items-center justify-center">
             <Calendar size={20} className="text-white" />
@@ -110,10 +110,10 @@ export default function JournalPage() {
         <div className="card p-5 bg-gradient-to-br from-aura-lavender-light to-aura-mint-light">
           <div className="flex items-center gap-3 mb-3">
             <TrendingUp size={24} className="text-aura-slate" />
-            <span className="font-semibold text-foreground">Weekly Insights</span>
+            <span className="font-semibold text-foreground">Статистика недели</span>
           </div>
           <div className="grid grid-cols-4 gap-3">
-            {['Happy', 'Calm', 'Anxious', 'Sad'].map((emotion, i) => (
+            {['Радость', 'Спокой.', 'Тревога', 'Грусть'].map((emotion, i) => (
               <div key={emotion} className="text-center">
                 <div
                   className={`h-16 rounded-lg mb-1 flex items-end justify-center ${
@@ -134,13 +134,13 @@ export default function JournalPage() {
       {/* Journal Entries */}
       <div className="px-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-foreground">Recent Entries</h2>
+          <h2 className="font-semibold text-foreground">Последние записи</h2>
           <button
             onClick={handleNewEntry}
             className="flex items-center gap-1 text-sm text-aura-mint-dark font-medium"
           >
             <Plus size={16} />
-            New Entry
+            Новая запись
           </button>
         </div>
 
@@ -168,16 +168,16 @@ export default function JournalPage() {
           ) : (
             <div className="card-soft p-8 text-center">
               <div className="text-4xl mb-3">📝</div>
-              <h3 className="font-medium text-foreground mb-1">No entries yet</h3>
+              <h3 className="font-medium text-foreground mb-1">Пока нет записей</h3>
               <p className="text-sm text-aura-slate/60 mb-4">
-                Start journaling to track your emotional journey
+                Начни вести дневник, чтобы отслеживать своё состояние
               </p>
               <button
                 onClick={handleNewEntry}
                 className="btn-primary inline-flex items-center gap-2"
               >
                 <Plus size={18} />
-                Create First Entry
+                Создать первую запись
               </button>
             </div>
           )}

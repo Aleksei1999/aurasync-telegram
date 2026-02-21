@@ -23,16 +23,16 @@ export default function ProfilePage() {
   const username = profile?.username || user?.username;
 
   const stats = [
-    { label: 'Sessions', value: '0', icon: Target },
-    { label: 'Minutes', value: '0', icon: Calendar },
-    { label: 'Streak', value: '0', icon: Star },
+    { label: 'Сессий', value: '0', icon: Target },
+    { label: 'Минут', value: '0', icon: Calendar },
+    { label: 'Дней подряд', value: '0', icon: Star },
   ];
 
   const menuItems = [
-    { icon: Crown, label: 'Subscription', value: 'Free', action: () => {} },
-    { icon: Bell, label: 'Notifications', value: 'On', action: () => {} },
-    { icon: Settings, label: 'Settings', action: () => {} },
-    { icon: HelpCircle, label: 'Help & Support', action: () => {} },
+    { icon: Crown, label: 'Подписка', value: 'Бесплатно', action: () => {} },
+    { icon: Bell, label: 'Уведомления', value: 'Вкл', action: () => {} },
+    { icon: Settings, label: 'Настройки', action: () => {} },
+    { icon: HelpCircle, label: 'Помощь', action: () => {} },
   ];
 
   const handleMenuClick = (action: () => void) => {
@@ -66,7 +66,7 @@ export default function ProfilePage() {
             )}
             <div className="flex items-center gap-1 mt-1">
               <Crown size={14} className="text-aura-peach" />
-              <span className="text-sm text-aura-peach font-medium">Free Plan</span>
+              <span className="text-sm text-aura-peach font-medium">Бесплатный план</span>
             </div>
           </div>
         </div>
@@ -98,12 +98,12 @@ export default function ProfilePage() {
           <div className="flex items-center gap-3 mb-3">
             <Crown size={24} className="text-aura-slate" />
             <div>
-              <h3 className="font-semibold text-foreground">Unlock Premium</h3>
-              <p className="text-sm text-aura-slate/70">Get unlimited access to all features</p>
+              <h3 className="font-semibold text-foreground">Открой Premium</h3>
+              <p className="text-sm text-aura-slate/70">Получи безлимитный доступ ко всем функциям</p>
             </div>
           </div>
           <button className="w-full btn-primary">
-            Try 7 Days Free
+            Попробовать 7 дней бесплатно
           </button>
         </div>
       </div>

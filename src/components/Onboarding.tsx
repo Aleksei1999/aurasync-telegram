@@ -14,20 +14,20 @@ interface OnboardingSlide {
 const slides: OnboardingSlide[] = [
   {
     icon: Sparkles,
-    title: 'Your Personal Wellness Manager',
-    description: 'AuraSync helps you manage stress, balance hormones, and feel your best every day.',
+    title: 'Твой персональный менеджер баланса',
+    description: 'AuraSync поможет управлять стрессом, гормонами и чувствовать себя лучше каждый день.',
     gradient: 'from-aura-mint to-aura-mint-dark',
   },
   {
     icon: Heart,
-    title: 'Science-Backed Practices',
-    description: 'Our methods are based on neuroscience research, not esoteric practices.',
+    title: 'Научный подход',
+    description: 'Наши методы основаны на нейробиологии, а не на эзотерике.',
     gradient: 'from-aura-peach to-aura-peach-dark',
   },
   {
     icon: BarChart3,
-    title: 'See Real Results',
-    description: 'Track your progress and see how meditation affects your beauty and energy.',
+    title: 'Видимый результат',
+    description: 'Отслеживай прогресс и смотри, как практики влияют на красоту и энергию.',
     gradient: 'from-aura-lavender to-aura-lavender-dark',
   },
 ];
@@ -38,10 +38,10 @@ interface FeelingOption {
 }
 
 const feelings: FeelingOption[] = [
-  { id: 'calm', label: 'Calm and grounded' },
-  { id: 'light', label: 'Light and blissful' },
-  { id: 'empowered', label: 'Empowered and worth' },
-  { id: 'aligned', label: 'Aligned and connected' },
+  { id: 'calm', label: 'Спокойствие и заземлённость' },
+  { id: 'light', label: 'Лёгкость и радость' },
+  { id: 'empowered', label: 'Уверенность и силу' },
+  { id: 'aligned', label: 'Гармонию и баланс' },
 ];
 
 interface OnboardingProps {
@@ -91,10 +91,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           </div>
 
           <h1 className="text-2xl font-bold text-center text-foreground mb-2">
-            How would you like to feel?
+            Что ты хочешь почувствовать?
           </h1>
           <p className="text-center text-aura-slate/70 mb-8">
-            Select all that resonate with you
+            Выбери всё, что откликается
           </p>
 
           <div className="space-y-3">
@@ -123,7 +123,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               selectedFeelings.length === 0 ? 'opacity-50' : ''
             }`}
           >
-            Get Started
+            Начать
             <ChevronRight size={20} />
           </button>
         </div>
@@ -142,7 +142,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           onClick={handleSkip}
           className="text-aura-slate/60 text-sm font-medium px-4 py-2"
         >
-          Skip
+          Пропустить
         </button>
       </div>
 
@@ -184,7 +184,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           onClick={handleNext}
           className="w-full btn-primary flex items-center justify-center gap-2"
         >
-          Continue
+          Далее
           <ChevronRight size={20} />
         </button>
       </div>

@@ -19,7 +19,7 @@ export function SplashScreen() {
         AuraSync
       </h1>
       <p className="mt-2 text-aura-slate/60 text-sm">
-        Your wellness journey
+        Твой путь к балансу
       </p>
 
       {/* Loading indicator */}

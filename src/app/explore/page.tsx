@@ -17,48 +17,48 @@ interface Category {
 const categories: Category[] = [
   {
     id: 'sleep',
-    title: 'Sleep',
-    subtitle: 'Fall asleep with ease',
+    title: 'Сон',
+    subtitle: 'Легко засыпай',
     icon: Moon,
     gradient: 'from-aura-lavender to-aura-lavender-dark',
     practices: 12,
   },
   {
     id: 'anxiety',
-    title: 'Anxiety',
-    subtitle: 'Calm stress and anxiety',
+    title: 'Тревога',
+    subtitle: 'Успокой стресс и тревогу',
     icon: Heart,
     gradient: 'from-aura-peach to-aura-peach-dark',
     practices: 15,
   },
   {
     id: 'energy',
-    title: 'Morning Energy',
-    subtitle: 'Wake up with focus',
+    title: 'Утренняя энергия',
+    subtitle: 'Просыпайся с фокусом',
     icon: Sun,
     gradient: 'from-aura-mint to-aura-mint-dark',
     practices: 8,
   },
   {
     id: 'focus',
-    title: 'Focus',
-    subtitle: 'Boost concentration',
+    title: 'Фокус',
+    subtitle: 'Повысь концентрацию',
     icon: Brain,
     gradient: 'from-aura-sage to-aura-mint',
     practices: 10,
   },
   {
     id: 'beauty',
-    title: 'Beauty Rest',
-    subtitle: 'Reduce cortisol face',
+    title: 'Красота',
+    subtitle: 'Убери кортизоловое лицо',
     icon: Sparkles,
     gradient: 'from-pink-200 to-aura-peach',
     practices: 7,
   },
   {
     id: 'recharge',
-    title: 'Recharge',
-    subtitle: 'Restore your energy',
+    title: 'Восстановление',
+    subtitle: 'Верни свою энергию',
     icon: Battery,
     gradient: 'from-green-200 to-aura-mint',
     practices: 9,
@@ -83,8 +83,8 @@ export default function ExplorePage() {
     <div className="min-h-screen bg-background pb-tab-bar">
       {/* Header */}
       <header className="px-5 pt-4 pb-2 safe-area-top">
-        <h1 className="text-2xl font-bold text-foreground">Explore</h1>
-        <p className="text-aura-slate/60">Discover practices for every moment</p>
+        <h1 className="text-2xl font-bold text-foreground">Практики</h1>
+        <p className="text-aura-slate/60">Найди практику для любого момента</p>
       </header>
 
       {/* Search */}
@@ -93,7 +93,7 @@ export default function ExplorePage() {
           <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-aura-slate/40" />
           <input
             type="text"
-            placeholder="Search practices..."
+            placeholder="Поиск практик..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-12 pr-4 py-3 rounded-xl bg-white border border-aura-slate/10 text-foreground placeholder:text-aura-slate/40 focus:outline-none focus:border-aura-mint"
@@ -120,7 +120,7 @@ export default function ExplorePage() {
                 <h3 className="font-semibold text-foreground">{category.title}</h3>
                 <p className="text-xs text-aura-slate/60 mt-1">{category.subtitle}</p>
                 <p className="text-xs text-aura-mint-dark mt-2 font-medium">
-                  {category.practices} practices
+                  {category.practices} практик
                 </p>
               </button>
             );
@@ -130,8 +130,8 @@ export default function ExplorePage() {
         {/* New Releases Section */}
         <div className="mt-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-foreground">New Releases</h2>
-            <button className="text-sm text-aura-mint-dark font-medium">See all</button>
+            <h2 className="font-semibold text-foreground">Новинки</h2>
+            <button className="text-sm text-aura-mint-dark font-medium">Все</button>
           </div>
 
           <div className="space-y-3">
@@ -144,8 +144,8 @@ export default function ExplorePage() {
                   <Sparkles size={24} className="text-aura-slate" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-foreground">Deep Relaxation #{i}</h4>
-                  <p className="text-xs text-aura-slate/60">10 min • Stress relief</p>
+                  <h4 className="font-medium text-foreground">Глубокое расслабление #{i}</h4>
+                  <p className="text-xs text-aura-slate/60">10 мин • Снятие стресса</p>
                 </div>
                 <button className="h-10 w-10 rounded-full bg-aura-mint flex items-center justify-center">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

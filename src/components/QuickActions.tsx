@@ -15,29 +15,29 @@ const quickActions: QuickAction[] = [
   {
     id: 'sos',
     icon: Zap,
-    label: 'SOS Balance',
-    duration: '2 min',
+    label: 'SOS Баланс',
+    duration: '2 мин',
     gradient: 'from-aura-peach to-aura-peach-dark',
   },
   {
     id: 'breathe',
     icon: Wind,
-    label: 'Quick Breathe',
-    duration: '1 min',
+    label: 'Быстрое дыхание',
+    duration: '1 мин',
     gradient: 'from-aura-mint to-aura-mint-dark',
   },
   {
     id: 'calm',
     icon: Heart,
-    label: 'Calm Down',
-    duration: '3 min',
+    label: 'Успокоиться',
+    duration: '3 мин',
     gradient: 'from-aura-lavender to-aura-lavender-dark',
   },
   {
     id: 'focus',
     icon: Brain,
-    label: 'Focus Mode',
-    duration: '5 min',
+    label: 'Фокус',
+    duration: '5 мин',
     gradient: 'from-aura-sage to-aura-mint',
   },
 ];
@@ -57,8 +57,8 @@ export function QuickActions({ onActionClick }: QuickActionsProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between px-1">
-        <h3 className="font-semibold text-foreground">Quick Actions</h3>
-        <span className="text-sm text-aura-slate/60">Instant relief</span>
+        <h3 className="font-semibold text-foreground">Быстрые действия</h3>
+        <span className="text-sm text-aura-slate/60">Мгновенная помощь</span>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

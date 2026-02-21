@@ -12,11 +12,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { icon: Home, label: 'Home', path: '/' },
-  { icon: Compass, label: 'Explore', path: '/explore' },
-  { icon: Plus, label: 'Add', path: '/journal/new', isCenter: true },
-  { icon: BookOpen, label: 'Journal', path: '/journal' },
-  { icon: User, label: 'Profile', path: '/profile' },
+  { icon: Home, label: 'Главная', path: '/' },
+  { icon: Compass, label: 'Практики', path: '/explore' },
+  { icon: Plus, label: 'Запись', path: '/journal/new', isCenter: true },
+  { icon: BookOpen, label: 'Дневник', path: '/journal' },
+  { icon: User, label: 'Профиль', path: '/profile' },
 ];
 
 export function Navigation() {

@@ -11,11 +11,11 @@ interface Mood {
 }
 
 const moods: Mood[] = [
-  { id: 'great', emoji: '😊', label: 'Great', color: 'bg-green-100 border-green-300' },
-  { id: 'good', emoji: '🙂', label: 'Good', color: 'bg-aura-mint-light border-aura-mint' },
-  { id: 'okay', emoji: '😐', label: 'Okay', color: 'bg-aura-cream border-aura-peach' },
-  { id: 'low', emoji: '😔', label: 'Low', color: 'bg-aura-lavender-light border-aura-lavender' },
-  { id: 'stressed', emoji: '😰', label: 'Stressed', color: 'bg-aura-peach-light border-aura-peach-dark' },
+  { id: 'great', emoji: '😊', label: 'Отлично', color: 'bg-green-100 border-green-300' },
+  { id: 'good', emoji: '🙂', label: 'Хорошо', color: 'bg-aura-mint-light border-aura-mint' },
+  { id: 'okay', emoji: '😐', label: 'Норм', color: 'bg-aura-cream border-aura-peach' },
+  { id: 'low', emoji: '😔', label: 'Грустно', color: 'bg-aura-lavender-light border-aura-lavender' },
+  { id: 'stressed', emoji: '😰', label: 'Стресс', color: 'bg-aura-peach-light border-aura-peach-dark' },
 ];
 
 interface MoodTrackerProps {
@@ -36,8 +36,8 @@ export function MoodTracker({ onMoodSelect, selectedMood }: MoodTrackerProps) {
   return (
     <div className="space-y-3">
       <div className="px-1">
-        <h3 className="font-semibold text-foreground">How are you feeling?</h3>
-        <p className="text-sm text-aura-slate/60">Track your emotional state</p>
+        <h3 className="font-semibold text-foreground">Как ты себя чувствуешь?</h3>
+        <p className="text-sm text-aura-slate/60">Отслеживай своё состояние</p>
       </div>
 
       <div className="flex justify-between gap-2">

@@ -16,36 +16,36 @@ interface TimeConfig {
 
 const timeConfigs: Record<TimeOfDay, TimeConfig> = {
   morning: {
-    greeting: 'Good morning',
+    greeting: 'Доброе утро',
     icon: Sunrise,
     gradient: 'bg-morning',
-    suggestion: 'Start your day with intention',
-    practice: 'Morning Energy Boost',
-    duration: '5 min',
+    suggestion: 'Начни день с намерением',
+    practice: 'Утренняя энергия',
+    duration: '5 мин',
   },
   day: {
-    greeting: 'Good afternoon',
+    greeting: 'Добрый день',
     icon: Sun,
     gradient: 'bg-day',
-    suggestion: 'Stay focused and balanced',
-    practice: 'Midday Reset',
-    duration: '3 min',
+    suggestion: 'Сохраняй фокус и баланс',
+    practice: 'Дневная перезагрузка',
+    duration: '3 мин',
   },
   evening: {
-    greeting: 'Good evening',
+    greeting: 'Добрый вечер',
     icon: CloudSun,
     gradient: 'bg-evening',
-    suggestion: 'Wind down and reflect',
-    practice: 'Evening Calm',
-    duration: '7 min',
+    suggestion: 'Время расслабиться и отпустить день',
+    practice: 'Вечернее спокойствие',
+    duration: '7 мин',
   },
   night: {
-    greeting: 'Good night',
+    greeting: 'Доброй ночи',
     icon: Moon,
     gradient: 'bg-evening',
-    suggestion: 'Prepare for restful sleep',
-    practice: 'Sleep Preparation',
-    duration: '10 min',
+    suggestion: 'Подготовься к глубокому сну',
+    practice: 'Подготовка ко сну',
+    duration: '10 мин',
   },
 };
 
@@ -106,7 +106,7 @@ export function BioClock({ userName, onStartPractice }: BioClockProps) {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-aura-slate/60 uppercase tracking-wide mb-1">
-              Recommended for you
+              Рекомендуем для тебя
             </p>
             <h3 className="font-semibold text-foreground">{config.practice}</h3>
             <p className="text-sm text-aura-slate/70">{config.duration}</p>

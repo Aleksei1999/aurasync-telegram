@@ -107,32 +107,32 @@ export default function HomePage() {
         {/* Today's Stats Preview */}
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-foreground">Today&apos;s Progress</h3>
+            <h3 className="font-semibold text-foreground">Прогресс за сегодня</h3>
             <button className="text-sm text-aura-mint-dark font-medium">
-              See all
+              Все
             </button>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-foreground">0</div>
-              <div className="text-xs text-aura-slate/60">Minutes</div>
+              <div className="text-xs text-aura-slate/60">Минут</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-foreground">0</div>
-              <div className="text-xs text-aura-slate/60">Sessions</div>
+              <div className="text-xs text-aura-slate/60">Сессий</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-foreground">0</div>
-              <div className="text-xs text-aura-slate/60">Streak</div>
+              <div className="text-xs text-aura-slate/60">Дней</div>
             </div>
           </div>
 
           {/* Progress bar */}
           <div className="mt-4">
             <div className="flex justify-between text-xs text-aura-slate/60 mb-1">
-              <span>Daily goal</span>
-              <span>0/10 min</span>
+              <span>Дневная цель</span>
+              <span>0/10 мин</span>
             </div>
             <div className="progress-bar">
               <div

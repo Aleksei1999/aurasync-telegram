@@ -6,18 +6,18 @@ import { useTelegram } from '@/components/TelegramProvider';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 
 const moods = [
-  { id: 'great', emoji: '😊', label: 'Great' },
-  { id: 'good', emoji: '🙂', label: 'Good' },
-  { id: 'okay', emoji: '😐', label: 'Okay' },
-  { id: 'low', emoji: '😔', label: 'Low' },
-  { id: 'stressed', emoji: '😰', label: 'Stressed' },
+  { id: 'great', emoji: '😊', label: 'Отлично' },
+  { id: 'good', emoji: '🙂', label: 'Хорошо' },
+  { id: 'okay', emoji: '😐', label: 'Норм' },
+  { id: 'low', emoji: '😔', label: 'Грустно' },
+  { id: 'stressed', emoji: '😰', label: 'Стресс' },
 ];
 
 const prompts = [
-  'What are you grateful for today?',
-  'How do you want to feel?',
-  'What\'s on your mind?',
-  'Describe your energy level',
+  'За что ты благодарна сегодня?',
+  'Как ты хочешь себя чувствовать?',
+  'Что у тебя на уме?',
+  'Опиши свой уровень энергии',
 ];
 
 export default function NewJournalPage() {
@@ -63,13 +63,13 @@ export default function NewJournalPage() {
         >
           <ArrowLeft size={20} className="text-aura-slate" />
         </button>
-        <h1 className="text-xl font-semibold text-foreground">New Entry</h1>
+        <h1 className="text-xl font-semibold text-foreground">Новая запись</h1>
       </header>
 
       <main className="px-5 py-4 space-y-6">
         {/* Mood Selection */}
         <div>
-          <h2 className="font-medium text-foreground mb-3">How are you feeling?</h2>
+          <h2 className="font-medium text-foreground mb-3">Как ты себя чувствуешь?</h2>
           <div className="flex justify-between gap-2">
             {moods.map((mood) => (
               <button
@@ -92,7 +92,7 @@ export default function NewJournalPage() {
 
         {/* Quick Prompts */}
         <div>
-          <h2 className="font-medium text-foreground mb-3">Quick prompts</h2>
+          <h2 className="font-medium text-foreground mb-3">Быстрые подсказки</h2>
           <div className="flex flex-wrap gap-2">
             {prompts.map((prompt) => (
               <button
@@ -112,11 +112,11 @@ export default function NewJournalPage() {
 
         {/* Text Input */}
         <div>
-          <h2 className="font-medium text-foreground mb-3">Your thoughts</h2>
+          <h2 className="font-medium text-foreground mb-3">Твои мысли</h2>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Write what's on your mind..."
+            placeholder="Напиши, что у тебя на душе..."
             className="w-full h-48 p-4 rounded-xl bg-white border border-aura-slate/10 text-foreground placeholder:text-aura-slate/40 focus:outline-none focus:border-aura-mint resize-none"
           />
         </div>
@@ -126,10 +126,10 @@ export default function NewJournalPage() {
           <div className="card-soft p-4 bg-gradient-to-br from-aura-lavender-light to-aura-mint-light">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles size={16} className="text-aura-slate" />
-              <span className="text-sm font-medium text-foreground">AI Insight</span>
+              <span className="text-sm font-medium text-foreground">AI-анализ</span>
             </div>
             <p className="text-sm text-aura-slate/70">
-              Based on your entry, we recommend a calming breathing exercise...
+              На основе твоей записи рекомендуем успокаивающее дыхательное упражнение...
             </p>
           </div>
         )}
@@ -144,7 +144,7 @@ export default function NewJournalPage() {
             !selectedMood || text.length < 5 ? 'opacity-50' : ''
           }`}
         >
-          Save Entry
+          Сохранить
         </button>
       </div>
     </div>
