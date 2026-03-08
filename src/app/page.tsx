@@ -33,102 +33,6 @@ interface OnboardingAnswers {
   [key: string]: string | string[] | undefined;
 }
 
-// Функция для получения персонализированных рекомендаций
-function getPersonalizedRecommendations(
-  onboardingAnswers: OnboardingAnswers,
-  todayCheckin: TodayCheckin | null
-) {
-  const recommendations: { title: string; description: string; duration: string; type: string }[] = [];
-
-  // На основе сегодняшнего настроения
-  if (todayCheckin) {
-    if (todayCheckin.mood === 'stressed' || todayCheckin.mood === 'anxious') {
-      recommendations.push({
-        title: 'SOS Дыхание',
-        description: 'Быстрая техника для снятия тревоги',
-        duration: '2 мин',
-        type: 'sos',
-      });
-    }
-
-    if (todayCheckin.mood === 'tired' || todayCheckin.energy <= 2) {
-      recommendations.push({
-        title: 'Энергетический буст',
-        description: 'Восстанови силы за 5 минут',
-        duration: '5 мин',
-        type: 'energy',
-      });
-    }
-
-    if (todayCheckin.sleep === 'terrible' || todayCheckin.sleep === 'poor') {
-      recommendations.push({
-        title: 'Восстановление после плохого сна',
-        description: 'Компенсируй недосып правильно',
-        duration: '7 мин',
-        type: 'recovery',
-      });
-    }
-
-    if (todayCheckin.mood === 'sad') {
-      recommendations.push({
-        title: 'Поднятие настроения',
-        description: 'Мягкая практика для позитива',
-        duration: '5 мин',
-        type: 'mood',
-      });
-    }
-  }
-
-  // На основе онбординга
-  if (onboardingAnswers.main_goal === 'stress') {
-    recommendations.push({
-      title: 'Антистресс медитация',
-      description: 'Снижаем уровень кортизола',
-      duration: '10 мин',
-      type: 'stress',
-    });
-  }
-
-  if (onboardingAnswers.main_goal === 'sleep') {
-    recommendations.push({
-      title: 'Вечерняя релаксация',
-      description: 'Подготовка к качественному сну',
-      duration: '15 мин',
-      type: 'sleep',
-    });
-  }
-
-  if (onboardingAnswers.main_goal === 'beauty') {
-    recommendations.push({
-      title: 'Антикортизоловая практика',
-      description: 'Убираем отёки и улучшаем цвет лица',
-      duration: '8 мин',
-      type: 'beauty',
-    });
-  }
-
-  if (onboardingAnswers.physical_symptoms?.includes('tension')) {
-    recommendations.push({
-      title: 'Расслабление тела',
-      description: 'Снимаем мышечные зажимы',
-      duration: '10 мин',
-      type: 'body',
-    });
-  }
-
-  // Если рекомендаций мало, добавляем базовые
-  if (recommendations.length < 3) {
-    recommendations.push({
-      title: 'Утренняя практика',
-      description: 'Настройся на продуктивный день',
-      duration: '5 мин',
-      type: 'morning',
-    });
-  }
-
-  return recommendations.slice(0, 3);
-}
-
 export default function HomePage() {
   const router = useRouter();
   const { user } = useTelegram();
@@ -217,8 +121,6 @@ export default function HomePage() {
   }
 
   const userName = profile?.first_name || user?.first_name;
-  const recommendations = getPersonalizedRecommendations(onboardingAnswers, todayCheckin);
-
   const userPhoto = profile?.photo_url || user?.photo_url;
 
   return (
@@ -227,8 +129,8 @@ export default function HomePage() {
       <header className="px-5 pt-4 pb-2 safe-area-top">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-aura-mint to-aura-lavender flex items-center justify-center text-white font-semibold">
-              {userName ? userName.charAt(0).toUpperCase() : 'A'}
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-aura-mint to-aura-lavender flex items-center justify-center">
+              <span className="text-white text-lg">✨</span>
             </div>
             <span className="font-semibold text-lg text-foreground">AuraSync</span>
           </div>
@@ -261,37 +163,6 @@ export default function HomePage() {
           birthDate={onboardingAnswers.birth_date as string}
           birthTime={onboardingAnswers.birth_time as string}
         />
-
-        {/* Personalized Recommendations */}
-        {recommendations.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="font-semibold text-foreground">Рекомендации</h3>
-              <span className="text-sm text-aura-slate/60">На основе чекина</span>
-            </div>
-
-            <div className="space-y-3">
-              {recommendations.map((rec, index) => (
-                <button
-                  key={index}
-                  onClick={() => router.push('/program')}
-                  className="w-full card-soft p-4 flex items-center gap-4 transition-transform active:scale-[0.99]"
-                >
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-aura-mint to-aura-mint-dark flex items-center justify-center">
-                    <span className="text-white text-lg">✨</span>
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h4 className="font-medium text-foreground">{rec.title}</h4>
-                    <p className="text-xs text-aura-slate/60">{rec.description}</p>
-                  </div>
-                  <span className="text-sm text-aura-mint-dark font-medium">
-                    {rec.duration}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </main>
 
       {/* Navigation */}
