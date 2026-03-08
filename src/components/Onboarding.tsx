@@ -1,19 +1,27 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronRight, ChevronLeft, Sparkles } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { ChevronRight, ChevronLeft, Sparkles, Camera, Upload, X } from 'lucide-react';
 import { useTelegram } from './TelegramProvider';
 
 interface OnboardingQuestion {
   id: string;
   question: string;
-  type: 'single' | 'multiple' | 'scale' | 'date' | 'time';
+  type: 'single' | 'multiple' | 'scale' | 'date' | 'time' | 'photo';
   options?: { id: string; label: string; emoji?: string }[];
   scaleLabels?: { min: string; max: string };
   placeholder?: string;
+  optional?: boolean;
 }
 
 const questions: OnboardingQuestion[] = [
+  {
+    id: 'before_photo',
+    question: 'Загрузи своё фото «До»',
+    type: 'photo',
+    placeholder: 'Это фото останется приватным и поможет отслеживать твой прогресс',
+    optional: true,
+  },
   {
     id: 'birth_date',
     question: 'Когда ты родилась?',
@@ -211,15 +219,56 @@ interface OnboardingProps {
 export function Onboarding({ onComplete }: OnboardingProps) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { hapticFeedback } = useTelegram();
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    hapticFeedback('light');
+
+    // Проверяем размер (макс 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Файл слишком большой. Максимум 10MB');
+      return;
+    }
+
+    // Создаём превью
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setPhotoPreview(dataUrl);
+      setAnswers(prev => ({ ...prev, [question.id]: dataUrl }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = () => {
+    hapticFeedback('light');
+    setPhotoPreview(null);
+    setAnswers(prev => {
+      const newAnswers = { ...prev };
+      delete newAnswers[question.id];
+      return newAnswers;
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const question = questions[currentQuestion];
   const progress = ((currentQuestion + 1) / questions.length) * 100;
   const isLastQuestion = currentQuestion === questions.length - 1;
 
   const currentAnswer = answers[question.id];
-  const hasAnswer = question.type === 'multiple'
+  const hasAnswer = question.optional
+    ? true
+    : question.type === 'multiple'
     ? Array.isArray(currentAnswer) && currentAnswer.length > 0
+    : question.type === 'photo'
+    ? !!currentAnswer || question.optional
     : question.type === 'date' || question.type === 'time'
     ? !!currentAnswer
     : !!currentAnswer;
@@ -322,6 +371,67 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
         {/* Options */}
         <div className="flex-1 space-y-3 mt-4">
+          {question.type === 'photo' && (
+            <div className="space-y-4">
+              <p className="text-sm text-aura-slate/60">{question.placeholder}</p>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handlePhotoUpload}
+                className="hidden"
+              />
+
+              {photoPreview || currentAnswer ? (
+                <div className="relative">
+                  <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-aura-slate/10">
+                    <img
+                      src={photoPreview || (currentAnswer as string)}
+                      alt="Фото до"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <button
+                    onClick={handleRemovePhoto}
+                    className="absolute top-3 right-3 h-10 w-10 rounded-full bg-black/50 flex items-center justify-center"
+                  >
+                    <X size={20} className="text-white" />
+                  </button>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-3 right-3 px-4 py-2 rounded-xl bg-white/90 text-foreground text-sm font-medium flex items-center gap-2"
+                  >
+                    <Camera size={16} />
+                    Изменить
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full aspect-[3/4] rounded-3xl border-2 border-dashed border-aura-slate/20 bg-white flex flex-col items-center justify-center gap-4 transition-colors hover:border-aura-mint hover:bg-aura-mint/5"
+                  >
+                    <div className="h-20 w-20 rounded-full bg-gradient-to-br from-aura-mint to-aura-lavender flex items-center justify-center">
+                      <Camera size={32} className="text-white" />
+                    </div>
+                    <div className="text-center">
+                      <div className="font-medium text-foreground mb-1">Загрузить фото</div>
+                      <div className="text-sm text-aura-slate/60">или сделать селфи</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+
+              {question.optional && (
+                <p className="text-center text-sm text-aura-slate/50">
+                  Этот шаг можно пропустить
+                </p>
+              )}
+            </div>
+          )}
+
           {question.type === 'date' && (
             <div className="space-y-4">
               <p className="text-sm text-aura-slate/60">{question.placeholder}</p>
@@ -408,7 +518,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             !hasAnswer ? 'opacity-50' : ''
           }`}
         >
-          {isLastQuestion ? 'Начать' : 'Далее'}
+          {isLastQuestion ? 'Начать' : question.optional && !currentAnswer ? 'Пропустить' : 'Далее'}
           <ChevronRight size={20} />
         </button>
       </div>
