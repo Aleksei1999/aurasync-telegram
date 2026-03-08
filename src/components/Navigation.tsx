@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Compass, Plus, BookOpen, User } from 'lucide-react';
+import { Home, Layers, Map, ShoppingBag, User } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTelegram } from './TelegramProvider';
 
@@ -8,14 +8,13 @@ interface NavItem {
   icon: React.ComponentType<{ size?: number; className?: string }>;
   label: string;
   path: string;
-  isCenter?: boolean;
 }
 
 const navItems: NavItem[] = [
   { icon: Home, label: 'Главная', path: '/' },
-  { icon: Compass, label: 'Практики', path: '/explore' },
-  { icon: Plus, label: 'Запись', path: '/journal/new', isCenter: true },
-  { icon: BookOpen, label: 'Дневник', path: '/journal' },
+  { icon: Layers, label: 'Программа', path: '/program' },
+  { icon: Map, label: 'Карта', path: '/map' },
+  { icon: ShoppingBag, label: 'Магазин', path: '/shop' },
   { icon: User, label: 'Профиль', path: '/profile' },
 ];
 
@@ -36,18 +35,6 @@ export function Navigation() {
           {navItems.map((item) => {
             const isActive = pathname === item.path;
             const Icon = item.icon;
-
-            if (item.isCenter) {
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => handleNavClick(item.path)}
-                  className="relative -mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-aura-mint to-aura-mint-dark shadow-lg transition-transform active:scale-95"
-                >
-                  <Icon size={24} className="text-white" />
-                </button>
-              );
-            }
 
             return (
               <button

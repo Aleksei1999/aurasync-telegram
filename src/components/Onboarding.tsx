@@ -7,12 +7,25 @@ import { useTelegram } from './TelegramProvider';
 interface OnboardingQuestion {
   id: string;
   question: string;
-  type: 'single' | 'multiple' | 'scale';
+  type: 'single' | 'multiple' | 'scale' | 'date' | 'time';
   options?: { id: string; label: string; emoji?: string }[];
   scaleLabels?: { min: string; max: string };
+  placeholder?: string;
 }
 
 const questions: OnboardingQuestion[] = [
+  {
+    id: 'birth_date',
+    question: 'Когда ты родилась?',
+    type: 'date',
+    placeholder: 'Выбери дату рождения',
+  },
+  {
+    id: 'birth_time',
+    question: 'Во сколько ты родилась?',
+    type: 'time',
+    placeholder: 'Если не знаешь точно — примерно',
+  },
   {
     id: 'age_group',
     question: 'К какой возрастной группе ты относишься?',
@@ -207,11 +220,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const currentAnswer = answers[question.id];
   const hasAnswer = question.type === 'multiple'
     ? Array.isArray(currentAnswer) && currentAnswer.length > 0
+    : question.type === 'date' || question.type === 'time'
+    ? !!currentAnswer
     : !!currentAnswer;
 
   const handleSingleSelect = (optionId: string) => {
     hapticFeedback('light');
     setAnswers(prev => ({ ...prev, [question.id]: optionId }));
+  };
+
+  const handleDateTimeChange = (value: string) => {
+    setAnswers(prev => ({ ...prev, [question.id]: value }));
   };
 
   const handleMultipleSelect = (optionId: string) => {
@@ -303,7 +322,42 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
         {/* Options */}
         <div className="flex-1 space-y-3 mt-4">
-          {question.options?.map((option) => (
+          {question.type === 'date' && (
+            <div className="space-y-4">
+              <p className="text-sm text-aura-slate/60">{question.placeholder}</p>
+              <input
+                type="date"
+                value={(currentAnswer as string) || ''}
+                onChange={(e) => handleDateTimeChange(e.target.value)}
+                className="w-full p-4 rounded-2xl bg-white text-foreground shadow-sm border-0 text-lg focus:outline-none focus:ring-2 focus:ring-aura-mint"
+                max={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+          )}
+
+          {question.type === 'time' && (
+            <div className="space-y-4">
+              <p className="text-sm text-aura-slate/60">{question.placeholder}</p>
+              <input
+                type="time"
+                value={(currentAnswer as string) || ''}
+                onChange={(e) => handleDateTimeChange(e.target.value)}
+                className="w-full p-4 rounded-2xl bg-white text-foreground shadow-sm border-0 text-lg focus:outline-none focus:ring-2 focus:ring-aura-mint"
+              />
+              <button
+                onClick={() => handleDateTimeChange('unknown')}
+                className={`w-full p-4 rounded-2xl text-left font-medium transition-all ${
+                  currentAnswer === 'unknown'
+                    ? 'bg-aura-mint text-foreground shadow-md'
+                    : 'bg-white text-aura-slate/80 shadow-sm'
+                }`}
+              >
+                Не знаю точное время
+              </button>
+            </div>
+          )}
+
+          {(question.type === 'single' || question.type === 'multiple') && question.options?.map((option) => (
             <button
               key={option.id}
               onClick={() =>

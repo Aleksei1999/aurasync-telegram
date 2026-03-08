@@ -8,8 +8,9 @@ import { SplashScreen } from '@/components/SplashScreen';
 import { Onboarding } from '@/components/Onboarding';
 import { Navigation } from '@/components/Navigation';
 import { BioClock } from '@/components/BioClock';
-import { QuickActions } from '@/components/QuickActions';
 import { DailyCheckin } from '@/components/DailyCheckin';
+import { Calendar } from '@/components/Calendar';
+import { DailyForecast } from '@/components/DailyForecast';
 import { Sparkles } from 'lucide-react';
 
 type AppState = 'splash' | 'onboarding' | 'checkin' | 'main';
@@ -196,11 +197,7 @@ export default function HomePage() {
   };
 
   const handleStartPractice = () => {
-    router.push('/practice');
-  };
-
-  const handleQuickAction = (actionId: string) => {
-    router.push(`/practice/${actionId}`);
+    router.push('/program');
   };
 
   if (appState === 'splash') {
@@ -269,76 +266,51 @@ export default function HomePage() {
           onStartPractice={handleStartPractice}
         />
 
-        {/* Personalized Recommendations */}
+        {/* Daily Forecast */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="font-semibold text-foreground">Рекомендации для тебя</h3>
-            <span className="text-sm text-aura-slate/60">На основе чекина</span>
-          </div>
+          <h3 className="font-semibold text-foreground px-1">Прогноз дня</h3>
+          <DailyForecast
+            birthDate={onboardingAnswers.birth_date as string}
+            birthTime={onboardingAnswers.birth_time as string}
+          />
+        </div>
 
+        {/* Calendar */}
+        <div className="space-y-3">
+          <h3 className="font-semibold text-foreground px-1">Календарь</h3>
+          <Calendar />
+        </div>
+
+        {/* Personalized Recommendations */}
+        {recommendations.length > 0 && (
           <div className="space-y-3">
-            {recommendations.map((rec, index) => (
-              <button
-                key={index}
-                onClick={() => handleQuickAction(rec.type)}
-                className="w-full card-soft p-4 flex items-center gap-4 transition-transform active:scale-[0.99]"
-              >
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-aura-mint to-aura-mint-dark flex items-center justify-center">
-                  <Sparkles size={20} className="text-white" />
-                </div>
-                <div className="flex-1 text-left">
-                  <h4 className="font-medium text-foreground">{rec.title}</h4>
-                  <p className="text-xs text-aura-slate/60">{rec.description}</p>
-                </div>
-                <span className="text-sm text-aura-mint-dark font-medium">
-                  {rec.duration}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <QuickActions onActionClick={handleQuickAction} />
-
-        {/* Today's Stats Preview */}
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-foreground">Прогресс за сегодня</h3>
-            <button className="text-sm text-aura-mint-dark font-medium">
-              Все
-            </button>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-foreground">0</div>
-              <div className="text-xs text-aura-slate/60">Минут</div>
+            <div className="flex items-center justify-between px-1">
+              <h3 className="font-semibold text-foreground">Рекомендации</h3>
+              <span className="text-sm text-aura-slate/60">На основе чекина</span>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-foreground">0</div>
-              <div className="text-xs text-aura-slate/60">Сессий</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-foreground">0</div>
-              <div className="text-xs text-aura-slate/60">Дней</div>
+
+            <div className="space-y-3">
+              {recommendations.map((rec, index) => (
+                <button
+                  key={index}
+                  onClick={() => router.push('/program')}
+                  className="w-full card-soft p-4 flex items-center gap-4 transition-transform active:scale-[0.99]"
+                >
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-aura-mint to-aura-mint-dark flex items-center justify-center">
+                    <Sparkles size={20} className="text-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h4 className="font-medium text-foreground">{rec.title}</h4>
+                    <p className="text-xs text-aura-slate/60">{rec.description}</p>
+                  </div>
+                  <span className="text-sm text-aura-mint-dark font-medium">
+                    {rec.duration}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
-
-          {/* Progress bar */}
-          <div className="mt-4">
-            <div className="flex justify-between text-xs text-aura-slate/60 mb-1">
-              <span>Дневная цель</span>
-              <span>0/10 мин</span>
-            </div>
-            <div className="progress-bar">
-              <div
-                className="progress-bar-fill bg-gradient-to-r from-aura-mint to-aura-mint-dark"
-                style={{ width: '0%' }}
-              />
-            </div>
-          </div>
-        </div>
+        )}
       </main>
 
       {/* Navigation */}
