@@ -14,7 +14,12 @@ import {
   BookOpen,
   ChevronRight,
   Trophy,
-  Flame
+  Flame,
+  X,
+  Star,
+  Zap,
+  Leaf,
+  Eye
 } from 'lucide-react';
 import { useTelegram } from './TelegramProvider';
 
@@ -110,9 +115,46 @@ function saveTodayProgress(progress: DayProgress) {
   localStorage.setItem('aura_daily_progress', JSON.stringify(progress));
 }
 
+// Недели трансформации
+const programWeeks = [
+  {
+    week: 1,
+    title: 'Фундамент осознанности',
+    description: 'Закладываем основы практики. Учимся замечать своё дыхание, тело и эмоции.',
+    icon: Leaf,
+    color: 'from-green-400 to-emerald-500',
+    results: ['Снижение уровня стресса', 'Улучшение качества сна', 'Повышение концентрации'],
+  },
+  {
+    week: 2,
+    title: 'Энергия и баланс',
+    description: 'Работаем с энергетическим телом. Дыхательные практики и техники восстановления.',
+    icon: Zap,
+    color: 'from-amber-400 to-orange-500',
+    results: ['Прилив жизненных сил', 'Эмоциональная стабильность', 'Ясность мышления'],
+  },
+  {
+    week: 3,
+    title: 'Глубинная трансформация',
+    description: 'Погружаемся глубже. Работа с подсознанием, отпускание старых паттернов.',
+    icon: Eye,
+    color: 'from-purple-400 to-indigo-500',
+    results: ['Освобождение от тревоги', 'Принятие себя', 'Внутренний покой'],
+  },
+  {
+    week: 4,
+    title: 'Интеграция и сияние',
+    description: 'Объединяем все практики. Выходим на новый уровень осознанности и энергии.',
+    icon: Star,
+    color: 'from-pink-400 to-rose-500',
+    results: ['Устойчивое внутреннее спокойствие', 'Сияющая внешность', 'Гармония во всех сферах'],
+  },
+];
+
 export function DailyProgram() {
   const { hapticFeedback } = useTelegram();
   const [dayNumber, setDayNumber] = useState(1);
+  const [showProgramInfo, setShowProgramInfo] = useState(false);
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [habits, setHabits] = useState<HabitCheck[]>([]);
   const [streak, setStreak] = useState(0);
@@ -278,15 +320,199 @@ export function DailyProgram() {
   const dayData = programDays[(dayNumber - 1) % 30];
   const visibleHabits = showAllHabits ? habits : habits.slice(0, 4);
 
+  const currentWeek = Math.ceil(dayNumber / 7);
+
+  // Модальное окно с информацией о программе
+  if (showProgramInfo) {
+    return (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+        <div className="w-full bg-white rounded-t-3xl max-h-[90vh] overflow-y-auto animate-slide-up safe-area-bottom">
+          {/* Header */}
+          <div className="p-5 bg-gradient-to-br from-aura-mint to-aura-lavender text-white sticky top-0">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Trophy size={16} className="text-white/80" />
+                  <span className="text-sm font-medium text-white/90">30 дней трансформации</span>
+                </div>
+                <h2 className="text-2xl font-bold">Бесплатная программа</h2>
+              </div>
+              <button
+                onClick={() => {
+                  hapticFeedback('light');
+                  setShowProgramInfo(false);
+                }}
+                className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center"
+              >
+                <X size={20} className="text-white" />
+              </button>
+            </div>
+            <p className="text-white/90 text-sm">
+              Комплексная программа для улучшения качества жизни через ежедневные практики осознанности
+            </p>
+          </div>
+
+          {/* Content */}
+          <div className="p-5 space-y-6">
+            {/* Твой прогресс */}
+            <div className="card-soft p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-foreground">Твой прогресс</h4>
+                <span className="text-sm text-aura-mint font-medium">День {dayNumber}/30</span>
+              </div>
+              <div className="h-3 bg-aura-slate/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-aura-mint to-aura-lavender rounded-full transition-all"
+                  style={{ width: `${(dayNumber / 30) * 100}%` }}
+                />
+              </div>
+              <div className="flex justify-between mt-2 text-xs text-aura-slate/60">
+                <span>Начало</span>
+                <span>Неделя {currentWeek}</span>
+                <span>Финиш</span>
+              </div>
+            </div>
+
+            {/* Недели программы */}
+            <div className="space-y-3">
+              <h4 className="font-semibold text-foreground">4 недели трансформации</h4>
+
+              {programWeeks.map((week) => {
+                const WeekIcon = week.icon;
+                const isCurrentWeek = week.week === currentWeek;
+                const isPastWeek = week.week < currentWeek;
+
+                return (
+                  <div
+                    key={week.week}
+                    className={`card-soft p-4 ${isCurrentWeek ? 'ring-2 ring-aura-mint' : ''}`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${week.color} flex items-center justify-center shrink-0`}>
+                        {isPastWeek ? (
+                          <Check size={20} className="text-white" />
+                        ) : (
+                          <WeekIcon size={20} className="text-white" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs text-aura-slate/60">Неделя {week.week}</span>
+                          {isCurrentWeek && (
+                            <span className="px-2 py-0.5 rounded-full bg-aura-mint/20 text-aura-mint text-xs font-medium">
+                              Сейчас
+                            </span>
+                          )}
+                          {isPastWeek && (
+                            <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-600 text-xs font-medium">
+                              Пройдено
+                            </span>
+                          )}
+                        </div>
+                        <h5 className="font-semibold text-foreground mb-1">{week.title}</h5>
+                        <p className="text-sm text-aura-slate/70 mb-3">{week.description}</p>
+
+                        <div className="space-y-1.5">
+                          {week.results.map((result, i) => (
+                            <div key={i} className="flex items-center gap-2 text-sm">
+                              <div className={`h-1.5 w-1.5 rounded-full bg-gradient-to-br ${week.color}`} />
+                              <span className="text-aura-slate/80">{result}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Что включено */}
+            <div className="space-y-3">
+              <h4 className="font-semibold text-foreground">Что включено</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="card-soft p-4 text-center">
+                  <div className="text-2xl font-bold text-foreground">30</div>
+                  <div className="text-xs text-aura-slate/60">дней практик</div>
+                </div>
+                <div className="card-soft p-4 text-center">
+                  <div className="text-2xl font-bold text-foreground">120</div>
+                  <div className="text-xs text-aura-slate/60">заданий</div>
+                </div>
+                <div className="card-soft p-4 text-center">
+                  <div className="text-2xl font-bold text-foreground">30</div>
+                  <div className="text-xs text-aura-slate/60">медитаций</div>
+                </div>
+                <div className="card-soft p-4 text-center">
+                  <div className="text-2xl font-bold text-foreground">30</div>
+                  <div className="text-xs text-aura-slate/60">аффирмаций</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Результаты */}
+            <div className="card-soft p-5 bg-gradient-to-br from-aura-mint/10 to-aura-lavender/10">
+              <h4 className="font-semibold text-foreground mb-3">Ожидаемые результаты</h4>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
+                    <Check size={16} className="text-green-600" />
+                  </div>
+                  <span className="text-sm text-foreground">Снижение уровня стресса на 40%</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Moon size={16} className="text-blue-600" />
+                  </div>
+                  <span className="text-sm text-foreground">Улучшение качества сна</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                    <Zap size={16} className="text-amber-600" />
+                  </div>
+                  <span className="text-sm text-foreground">Повышение энергии в течение дня</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-pink-100 flex items-center justify-center">
+                    <Heart size={16} className="text-pink-600" />
+                  </div>
+                  <span className="text-sm text-foreground">Эмоциональная стабильность</span>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <button
+              onClick={() => {
+                hapticFeedback('medium');
+                setShowProgramInfo(false);
+              }}
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-aura-mint to-aura-lavender text-white font-semibold"
+            >
+              Продолжить день {dayNumber}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {/* Header карточка */}
-      <div className="rounded-3xl p-5 bg-gradient-to-br from-aura-mint to-aura-lavender shadow-lg">
+      {/* Header карточка - кликабельная */}
+      <button
+        onClick={() => {
+          hapticFeedback('light');
+          setShowProgramInfo(true);
+        }}
+        className="w-full rounded-3xl p-5 bg-gradient-to-br from-aura-mint to-aura-lavender shadow-lg text-left transition-transform active:scale-[0.99]"
+      >
         <div className="flex items-center justify-between mb-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Trophy size={16} className="text-white/80" />
               <span className="text-sm font-medium text-white/90">Бесплатная программа</span>
+              <ChevronRight size={14} className="text-white/60" />
             </div>
             <h3 className="text-xl font-bold text-white">День {dayNumber} из 30</h3>
             <p className="text-sm text-white/80 mt-0.5">{dayData.theme}</p>
@@ -342,7 +568,7 @@ export function DailyProgram() {
             />
           ))}
         </div>
-      </div>
+      </button>
 
       {/* Задания дня */}
       <div className="space-y-3">
