@@ -10,7 +10,7 @@ import { Navigation } from '@/components/Navigation';
 import { BioClock } from '@/components/BioClock';
 import { DailyCheckin } from '@/components/DailyCheckin';
 import { Calendar } from '@/components/Calendar';
-import { DailyForecast } from '@/components/DailyForecast';
+import { DestinyMatrix } from '@/components/DestinyMatrix';
 import { User } from 'lucide-react';
 
 type AppState = 'splash' | 'onboarding' | 'checkin' | 'main';
@@ -158,11 +158,8 @@ export default function HomePage() {
           onStartPractice={handleStartPractice}
         />
 
-        {/* Daily Forecast */}
-        <DailyForecast
-          birthDate={onboardingAnswers.birth_date as string}
-          birthTime={onboardingAnswers.birth_time as string}
-        />
+        {/* Destiny Matrix */}
+        <DestinyMatrix birthDate={onboardingAnswers.birth_date as string} />
       </main>
 
       {/* Navigation */}

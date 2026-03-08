@@ -132,7 +132,7 @@ export function DailyForecast({ birthDate, birthTime }: ForecastProps) {
   return (
     <div className="space-y-4">
       {/* Main forecast card */}
-      <div className={`card p-5 bg-gradient-to-br ${zodiac ? elementColors[zodiac.element] : 'from-aura-mint to-aura-lavender'} text-white`}>
+      <div className={`rounded-3xl p-5 bg-gradient-to-br ${zodiac ? elementColors[zodiac.element] : 'from-aura-mint to-aura-lavender'} text-white shadow-lg`}>
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
