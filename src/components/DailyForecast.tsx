@@ -102,10 +102,15 @@ function getDailyForecast(birthDate: string) {
   return dailyForecasts[index];
 }
 
+// Инициализируем прогноз сразу, чтобы не было белого экрана
+function getInitialForecast() {
+  return dailyForecasts[new Date().getDay() % dailyForecasts.length];
+}
+
 export function DailyForecast({ birthDate, birthTime }: ForecastProps) {
   const [zodiac, setZodiac] = useState<typeof zodiacSigns[0] | null>(null);
-  const [forecast, setForecast] = useState<typeof dailyForecasts[0] | null>(null);
-  const [moonPhase, setMoonPhase] = useState<typeof moonPhases[0] | null>(null);
+  const [forecast, setForecast] = useState<typeof dailyForecasts[0]>(getInitialForecast());
+  const [moonPhase, setMoonPhase] = useState<typeof moonPhases[0]>(getMoonPhase());
 
   useEffect(() => {
     // Пробуем загрузить дату рождения из onboarding
@@ -121,15 +126,8 @@ export function DailyForecast({ birthDate, birthTime }: ForecastProps) {
     if (date) {
       setZodiac(getZodiacSign(date));
       setForecast(getDailyForecast(date));
-    } else {
-      // Дефолтный прогноз
-      setForecast(dailyForecasts[new Date().getDay() % dailyForecasts.length]);
     }
-
-    setMoonPhase(getMoonPhase());
   }, [birthDate]);
-
-  if (!forecast) return null;
 
   return (
     <div className="space-y-4">
@@ -162,18 +160,16 @@ export function DailyForecast({ birthDate, birthTime }: ForecastProps) {
       </div>
 
       {/* Moon phase */}
-      {moonPhase && (
-        <div className="card-soft p-4 flex items-center gap-4">
-          <div className="text-3xl">{moonPhase.icon}</div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <Moon size={14} className="text-aura-lavender-dark" />
-              <span className="font-medium text-foreground">{moonPhase.name}</span>
-            </div>
-            <p className="text-sm text-aura-slate/60">{moonPhase.advice}</p>
+      <div className="card-soft p-4 flex items-center gap-4">
+        <div className="text-3xl">{moonPhase.icon}</div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <Moon size={14} className="text-aura-lavender-dark" />
+            <span className="font-medium text-foreground">{moonPhase.name}</span>
           </div>
+          <p className="text-sm text-aura-slate/60">{moonPhase.advice}</p>
         </div>
-      )}
+      </div>
 
       {/* Lucky indicators */}
       <div className="grid grid-cols-3 gap-3">

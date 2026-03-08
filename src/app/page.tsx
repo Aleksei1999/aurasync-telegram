@@ -11,7 +11,7 @@ import { BioClock } from '@/components/BioClock';
 import { DailyCheckin } from '@/components/DailyCheckin';
 import { Calendar } from '@/components/Calendar';
 import { DailyForecast } from '@/components/DailyForecast';
-import { Sparkles } from 'lucide-react';
+import { User } from 'lucide-react';
 
 type AppState = 'splash' | 'onboarding' | 'checkin' | 'main';
 
@@ -219,21 +219,7 @@ export default function HomePage() {
   const userName = profile?.first_name || user?.first_name;
   const recommendations = getPersonalizedRecommendations(onboardingAnswers, todayCheckin);
 
-  // Определяем статус на основе чекина
-  const getMoodEmoji = () => {
-    if (!todayCheckin) return '🌟';
-    const moodEmojis: Record<string, string> = {
-      great: '😊',
-      good: '🙂',
-      okay: '😐',
-      tired: '😴',
-      stressed: '😰',
-      anxious: '😟',
-      sad: '😢',
-      irritated: '😤',
-    };
-    return moodEmojis[todayCheckin.mood] || '🌟';
-  };
+  const userPhoto = profile?.photo_url || user?.photo_url;
 
   return (
     <div className="min-h-screen bg-background pb-tab-bar">
@@ -241,25 +227,29 @@ export default function HomePage() {
       <header className="px-5 pt-4 pb-2 safe-area-top">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-aura-mint to-aura-lavender flex items-center justify-center">
-              <Sparkles size={20} className="text-white" />
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-aura-mint to-aura-lavender flex items-center justify-center text-white font-semibold">
+              {userName ? userName.charAt(0).toUpperCase() : 'A'}
             </div>
             <span className="font-semibold text-lg text-foreground">AuraSync</span>
           </div>
           <button
-            onClick={() => setAppState('checkin')}
-            className="h-10 px-4 rounded-full bg-aura-mint-light flex items-center gap-2"
+            onClick={() => router.push('/profile')}
+            className="h-10 w-10 rounded-full bg-aura-slate/5 flex items-center justify-center overflow-hidden"
           >
-            <span className="text-lg">{getMoodEmoji()}</span>
-            <span className="text-sm font-medium text-aura-mint-dark">
-              {todayCheckin ? 'Обновить' : 'Чекин'}
-            </span>
+            {userPhoto ? (
+              <img src={userPhoto} alt="Profile" className="h-full w-full object-cover" />
+            ) : (
+              <User size={20} className="text-aura-slate" />
+            )}
           </button>
         </div>
       </header>
 
       {/* Main content */}
       <main className="px-5 py-4 space-y-6">
+        {/* Calendar (collapsible) */}
+        <Calendar />
+
         {/* Bio Clock */}
         <BioClock
           userName={userName}
@@ -267,19 +257,10 @@ export default function HomePage() {
         />
 
         {/* Daily Forecast */}
-        <div className="space-y-3">
-          <h3 className="font-semibold text-foreground px-1">Прогноз дня</h3>
-          <DailyForecast
-            birthDate={onboardingAnswers.birth_date as string}
-            birthTime={onboardingAnswers.birth_time as string}
-          />
-        </div>
-
-        {/* Calendar */}
-        <div className="space-y-3">
-          <h3 className="font-semibold text-foreground px-1">Календарь</h3>
-          <Calendar />
-        </div>
+        <DailyForecast
+          birthDate={onboardingAnswers.birth_date as string}
+          birthTime={onboardingAnswers.birth_time as string}
+        />
 
         {/* Personalized Recommendations */}
         {recommendations.length > 0 && (
@@ -297,7 +278,7 @@ export default function HomePage() {
                   className="w-full card-soft p-4 flex items-center gap-4 transition-transform active:scale-[0.99]"
                 >
                   <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-aura-mint to-aura-mint-dark flex items-center justify-center">
-                    <Sparkles size={20} className="text-white" />
+                    <span className="text-white text-lg">✨</span>
                   </div>
                   <div className="flex-1 text-left">
                     <h4 className="font-medium text-foreground">{rec.title}</h4>
