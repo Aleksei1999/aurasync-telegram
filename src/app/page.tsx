@@ -11,6 +11,7 @@ import { BioClock } from '@/components/BioClock';
 import { DailyCheckin } from '@/components/DailyCheckin';
 import { Calendar } from '@/components/Calendar';
 import { DestinyMatrix } from '@/components/DestinyMatrix';
+import { DailyProgram } from '@/components/DailyProgram';
 import { User } from 'lucide-react';
 
 type AppState = 'splash' | 'onboarding' | 'checkin' | 'main';
@@ -160,6 +161,9 @@ export default function HomePage() {
 
         {/* Destiny Matrix */}
         <DestinyMatrix birthDate={onboardingAnswers.birth_date as string} />
+
+        {/* Daily Program - Free 30-day program */}
+        <DailyProgram />
       </main>
 
       {/* Navigation */}
