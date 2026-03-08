@@ -264,7 +264,7 @@ export function DailyProgram() {
         const newStreak = streak + 1;
         setStreak(newStreak);
         localStorage.setItem('aura_streak', newStreak.toString());
-        hapticFeedback('success');
+        hapticFeedback('heavy');
       }
 
       return updated;
