@@ -35,6 +35,8 @@ export function DestinyMatrix({ birthDate }: DestinyMatrixProps) {
   const [forecast, setForecast] = useState<ReturnType<typeof getDailyForecast> | null>(null);
   const { hapticFeedback } = useTelegram();
 
+  const [hasBirthDate, setHasBirthDate] = useState(false);
+
   useEffect(() => {
     let date = birthDate;
 
@@ -48,6 +50,7 @@ export function DestinyMatrix({ birthDate }: DestinyMatrixProps) {
     }
 
     if (date) {
+      setHasBirthDate(true);
       const birthDateObj = new Date(date);
       const today = new Date();
 
@@ -55,12 +58,7 @@ export function DestinyMatrix({ birthDate }: DestinyMatrixProps) {
       setMatrix(matrixData);
       setForecast(getDailyForecast(matrixData));
     } else {
-      // Демо данные если нет даты рождения
-      const demoDate = new Date(1990, 0, 1);
-      const today = new Date();
-      const matrixData = calculateDestinyMatrix(demoDate, today);
-      setMatrix(matrixData);
-      setForecast(getDailyForecast(matrixData));
+      setHasBirthDate(false);
     }
   }, [birthDate]);
 
@@ -68,6 +66,34 @@ export function DestinyMatrix({ birthDate }: DestinyMatrixProps) {
     hapticFeedback('light');
     setIsExpanded(!isExpanded);
   };
+
+  // Если нет даты рождения — показываем приглашение
+  if (!hasBirthDate) {
+    return (
+      <div className="rounded-3xl p-5 bg-gradient-to-br from-aura-lavender to-aura-mint shadow-lg">
+        <div className="flex items-start gap-4">
+          <div className="text-4xl">🔮</div>
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-white mb-1">Матрица судьбы</h3>
+            <p className="text-white/80 text-sm mb-3">
+              Укажи дату рождения, чтобы рассчитать твою персональную матрицу и получать ежедневные прогнозы
+            </p>
+            <button
+              onClick={() => {
+                // Очищаем онбординг чтобы пройти заново
+                localStorage.removeItem('aura_onboarding_answers');
+                localStorage.removeItem('aura_onboarding_completed');
+                window.location.reload();
+              }}
+              className="px-4 py-2 rounded-xl bg-white/20 text-white text-sm font-medium transition-colors hover:bg-white/30"
+            >
+              Указать дату рождения
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!matrix || !forecast) {
     return (
