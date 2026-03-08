@@ -13,6 +13,7 @@ import {
   Star,
   Calendar,
   Target,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -28,11 +29,24 @@ export default function ProfilePage() {
     { label: 'Дней подряд', value: '0', icon: Star },
   ];
 
+  const handleResetOnboarding = () => {
+    if (confirm('Сбросить данные и пройти онбординг заново?')) {
+      localStorage.removeItem('aura_onboarding_answers');
+      localStorage.removeItem('aura_onboarding_completed');
+      localStorage.removeItem('aura_today_checkin');
+      localStorage.removeItem('aura_program_start');
+      localStorage.removeItem('aura_daily_progress');
+      localStorage.removeItem('aura_streak');
+      window.location.href = '/';
+    }
+  };
+
   const menuItems = [
     { icon: Crown, label: 'Подписка', value: 'Бесплатно', action: () => {} },
     { icon: Bell, label: 'Уведомления', value: 'Вкл', action: () => {} },
     { icon: Settings, label: 'Настройки', action: () => {} },
     { icon: HelpCircle, label: 'Помощь', action: () => {} },
+    { icon: RefreshCw, label: 'Сбросить онбординг', action: handleResetOnboarding, danger: true },
   ];
 
   const handleMenuClick = (action: () => void) => {
@@ -113,6 +127,7 @@ export default function ProfilePage() {
         <div className="card overflow-hidden">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
+            const isDanger = 'danger' in item && item.danger;
             return (
               <button
                 key={item.label}
@@ -121,10 +136,14 @@ export default function ProfilePage() {
                   index !== menuItems.length - 1 ? 'border-b border-aura-slate/5' : ''
                 }`}
               >
-                <div className="h-10 w-10 rounded-xl bg-aura-mint-light flex items-center justify-center">
-                  <Icon size={20} className="text-aura-mint-dark" />
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+                  isDanger ? 'bg-red-100' : 'bg-aura-mint-light'
+                }`}>
+                  <Icon size={20} className={isDanger ? 'text-red-500' : 'text-aura-mint-dark'} />
                 </div>
-                <span className="flex-1 text-left font-medium text-foreground">
+                <span className={`flex-1 text-left font-medium ${
+                  isDanger ? 'text-red-500' : 'text-foreground'
+                }`}>
                   {item.label}
                 </span>
                 {item.value && (
