@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Star, Sparkles, Heart, Wallet, Target, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Star, Sparkles, Heart, Wallet, Target, X, Calendar } from 'lucide-react';
 import { useTelegram } from './TelegramProvider';
 import {
   calculateDestinyMatrix,
@@ -13,6 +13,7 @@ import {
 
 interface DestinyMatrixProps {
   birthDate?: string;
+  onBirthDateUpdate?: (date: string) => void;
 }
 
 const compatibilityColors: Record<string, string> = {
@@ -29,8 +30,10 @@ const compatibilityEmoji: Record<string, string> = {
   'сложный': '⚡',
 };
 
-export function DestinyMatrix({ birthDate }: DestinyMatrixProps) {
+export function DestinyMatrix({ birthDate, onBirthDateUpdate }: DestinyMatrixProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
   const [matrix, setMatrix] = useState<DestinyMatrixData | null>(null);
   const [forecast, setForecast] = useState<ReturnType<typeof getDailyForecast> | null>(null);
   const { hapticFeedback } = useTelegram();
@@ -67,10 +70,86 @@ export function DestinyMatrix({ birthDate }: DestinyMatrixProps) {
     setIsExpanded(!isExpanded);
   };
 
+  const handleSaveBirthDate = () => {
+    if (!selectedDate) return;
+
+    hapticFeedback('medium');
+
+    // Сохраняем в localStorage
+    const savedOnboarding = localStorage.getItem('aura_onboarding_answers');
+    const answers = savedOnboarding ? JSON.parse(savedOnboarding) : {};
+    answers.birth_date = selectedDate;
+    localStorage.setItem('aura_onboarding_answers', JSON.stringify(answers));
+
+    // Обновляем состояние
+    setHasBirthDate(true);
+    const birthDateObj = new Date(selectedDate);
+    const today = new Date();
+    const matrixData = calculateDestinyMatrix(birthDateObj, today);
+    setMatrix(matrixData);
+    setForecast(getDailyForecast(matrixData));
+
+    setShowDatePicker(false);
+
+    // Уведомляем родителя если есть callback
+    if (onBirthDateUpdate) {
+      onBirthDateUpdate(selectedDate);
+    }
+  };
+
+  // Модальное окно для ввода даты
+  if (showDatePicker) {
+    return (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-5">
+        <div className="w-full max-w-sm bg-white rounded-3xl p-6 animate-scale-in">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-foreground">Дата рождения</h3>
+            <button
+              onClick={() => setShowDatePicker(false)}
+              className="h-8 w-8 rounded-full bg-aura-slate/10 flex items-center justify-center"
+            >
+              <X size={18} className="text-aura-slate" />
+            </button>
+          </div>
+
+          <p className="text-sm text-aura-slate/70 mb-4">
+            Укажи свою дату рождения для расчёта персональной матрицы судьбы
+          </p>
+
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            max={new Date().toISOString().split('T')[0]}
+            className="w-full p-4 rounded-2xl bg-aura-slate/5 text-foreground text-lg focus:outline-none focus:ring-2 focus:ring-aura-mint mb-4"
+          />
+
+          <button
+            onClick={handleSaveBirthDate}
+            disabled={!selectedDate}
+            className={`w-full py-4 rounded-2xl font-semibold text-white transition-all ${
+              selectedDate
+                ? 'bg-gradient-to-r from-aura-mint to-aura-lavender'
+                : 'bg-aura-slate/30'
+            }`}
+          >
+            Рассчитать матрицу
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Если нет даты рождения — показываем приглашение
   if (!hasBirthDate) {
     return (
-      <div className="rounded-3xl p-5 bg-gradient-to-br from-aura-lavender to-aura-mint shadow-lg">
+      <button
+        onClick={() => {
+          hapticFeedback('light');
+          setShowDatePicker(true);
+        }}
+        className="w-full rounded-3xl p-5 bg-gradient-to-br from-aura-lavender to-aura-mint shadow-lg text-left transition-transform active:scale-[0.99]"
+      >
         <div className="flex items-start gap-4">
           <div className="text-4xl">🔮</div>
           <div className="flex-1">
@@ -78,20 +157,13 @@ export function DestinyMatrix({ birthDate }: DestinyMatrixProps) {
             <p className="text-white/80 text-sm mb-3">
               Укажи дату рождения, чтобы рассчитать твою персональную матрицу и получать ежедневные прогнозы
             </p>
-            <button
-              onClick={() => {
-                // Очищаем онбординг чтобы пройти заново
-                localStorage.removeItem('aura_onboarding_answers');
-                localStorage.removeItem('aura_onboarding_completed');
-                window.location.reload();
-              }}
-              className="px-4 py-2 rounded-xl bg-white/20 text-white text-sm font-medium transition-colors hover:bg-white/30"
-            >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/20 text-white text-sm font-medium">
+              <Calendar size={16} />
               Указать дату рождения
-            </button>
+            </div>
           </div>
         </div>
-      </div>
+      </button>
     );
   }
 
