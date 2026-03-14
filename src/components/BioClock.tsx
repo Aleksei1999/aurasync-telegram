@@ -1,58 +1,25 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Sun, Moon, Sunrise, CloudSun, Headphones, Droplets, BookOpen, ChevronRight, X, Check, Play, Pause, Sparkles, Flame, HelpCircle } from 'lucide-react';
+import { Sun, Moon, Sunrise, CloudSun, Headphones, Droplets, BookOpen, ChevronRight, X, Check, Play, Pause, Sparkles, Flame, Info } from 'lucide-react';
 
-// Тултипы для разных элементов
+// Тултипы для элементов
 interface Tooltip {
   id: string;
   title: string;
   description: string;
-  position: 'top' | 'bottom' | 'center';
 }
 
 const tooltips: Record<string, Tooltip> = {
-  first_visit: {
-    id: 'first_visit',
-    title: 'Добро пожаловать!',
-    description: 'Нажмите на любую практику, чтобы узнать подробности и начать трансформацию',
-    position: 'bottom',
-  },
   streak: {
     id: 'streak',
     title: 'Серия дней',
     description: 'Количество дней подряд, когда вы заходите в приложение. После 7 дней начинается нейропластичность!',
-    position: 'bottom',
   },
   checklist: {
     id: 'checklist',
     title: 'Быстрые отметки',
-    description: 'Нажмите на квадрат, чтобы отметить выполнение задания. Не нужно открывать практику — просто тап!',
-    position: 'top',
-  },
-  dopamine_code: {
-    id: 'dopamine_code',
-    title: 'Зачем это нужно?',
-    description: 'Утренняя перезагрузка нервной системы. Снижает кортизол на 23% за 7 минут.',
-    position: 'center',
-  },
-  water_passport: {
-    id: 'water_passport',
-    title: 'Зачем это нужно?',
-    description: 'Вода — растворитель стресса. Выводит токсины и убирает отёки с лица.',
-    position: 'center',
-  },
-  jaw_relaxation: {
-    id: 'jaw_relaxation',
-    title: 'Зачем это нужно?',
-    description: 'Расслабление челюсти обрывает сигнал стресса в мозг. Мгновенный лифтинг-эффект.',
-    position: 'center',
-  },
-  alpha_immersion: {
-    id: 'alpha_immersion',
-    title: 'Зачем это нужно?',
-    description: 'Альфа-волны готовят мозг к глубокому сну и ночной регенерации.',
-    position: 'center',
+    description: 'Нажмите на квадрат, чтобы отметить выполнение. Не нужно открывать практику — просто тап!',
   },
 };
 
@@ -505,59 +472,49 @@ export function BioClock({ userName }: BioClockProps) {
   const config = timeConfigs[timeOfDay];
 
   // Компонент тултипа
-  const TooltipBubble = ({ tooltip, onDismiss }: { tooltip: Tooltip; onDismiss: () => void }) => (
-    <div
-      className={`absolute z-40 max-w-xs animate-fade-in ${
-        tooltip.position === 'top' ? 'bottom-full mb-2' :
-        tooltip.position === 'bottom' ? 'top-full mt-2' :
-        'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
-      }`}
-    >
+  const TooltipBubble = ({ tooltip, onDismiss, position = 'bottom' }: { tooltip: Tooltip; onDismiss: () => void; position?: 'top' | 'bottom' }) => (
+    <div className={`absolute z-50 w-64 animate-fade-in ${position === 'top' ? 'bottom-full mb-2 right-0' : 'top-full mt-2 right-0'}`}>
       <div className="bg-foreground text-white rounded-2xl p-4 shadow-xl">
-        <div className="flex items-start gap-3">
-          <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-            <HelpCircle size={16} className="text-white" />
-          </div>
-          <div className="flex-1">
-            <h4 className="font-semibold text-sm mb-1">{tooltip.title}</h4>
-            <p className="text-xs text-white/80 leading-relaxed">{tooltip.description}</p>
-          </div>
-        </div>
+        <h4 className="font-semibold text-sm mb-1">{tooltip.title}</h4>
+        <p className="text-xs text-white/80 leading-relaxed">{tooltip.description}</p>
         <button
           onClick={onDismiss}
-          className="mt-3 w-full py-2 bg-white/20 rounded-xl text-xs font-medium text-white hover:bg-white/30 transition-colors"
+          className="mt-3 w-full py-2 bg-white/20 rounded-xl text-xs font-medium text-white"
         >
           Понятно
         </button>
       </div>
       {/* Arrow */}
-      {tooltip.position !== 'center' && (
-        <div
-          className={`absolute left-1/2 -translate-x-1/2 w-0 h-0 border-8 border-transparent ${
-            tooltip.position === 'top'
-              ? 'top-full border-t-foreground'
-              : 'bottom-full border-b-foreground'
-          }`}
-        />
-      )}
+      <div className={`absolute right-4 w-0 h-0 border-8 border-transparent ${position === 'top' ? 'top-full border-t-foreground' : 'bottom-full border-b-foreground'}`} />
     </div>
   );
 
   return (
     <>
-      <div className={`${config.gradient} rounded-3xl p-6 animated-gradient relative`}>
-        {/* First Visit Tooltip Overlay */}
-        {activeTooltip === 'first_visit' && (
-          <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
-            <div className="pointer-events-auto">
-              <TooltipBubble
-                tooltip={tooltips.first_visit}
-                onDismiss={() => dismissTooltip('first_visit', true)}
-              />
+      {/* First Visit Tooltip - Fixed overlay */}
+      {activeTooltip === 'first_visit' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in">
+          <div className="mx-6 max-w-sm bg-white rounded-3xl p-6 shadow-2xl">
+            <div className="flex flex-col items-center text-center">
+              <div className="h-14 w-14 rounded-full bg-gradient-to-br from-aura-mint to-aura-lavender flex items-center justify-center mb-4">
+                <Sparkles size={28} className="text-white" />
+              </div>
+              <h3 className="font-bold text-lg text-foreground mb-2">Добро пожаловать!</h3>
+              <p className="text-sm text-aura-slate/70 leading-relaxed mb-6">
+                Нажмите на любую практику, чтобы узнать подробности и начать трансформацию
+              </p>
+              <button
+                onClick={() => dismissTooltip('first_visit', true)}
+                className="w-full py-3 bg-gradient-to-r from-aura-mint to-aura-mint-dark text-white font-semibold rounded-xl"
+              >
+                Начать
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
+      <div className={`${config.gradient} rounded-3xl p-6 animated-gradient`}>
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div>
@@ -585,6 +542,7 @@ export function BioClock({ userName }: BioClockProps) {
                 <TooltipBubble
                   tooltip={tooltips.streak}
                   onDismiss={() => dismissTooltip('streak', false)}
+                  position="bottom"
                 />
               )}
             </div>
@@ -602,61 +560,36 @@ export function BioClock({ userName }: BioClockProps) {
           {recommendations.map((rec) => {
             const Icon = getRecommendationIcon(rec.type);
             const isCompleted = completedTasks.includes(rec.id);
-            const tooltip = tooltips[rec.id];
 
             return (
-              <div key={rec.id} className="relative">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setSelectedRec(rec)}
-                    className={`flex-1 glass rounded-xl p-4 flex items-center gap-3 transition-all active:scale-[0.99] ${
-                      isCompleted ? 'opacity-60' : ''
-                    }`}
-                  >
-                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      isCompleted
-                        ? 'bg-aura-mint/30'
-                        : 'bg-gradient-to-br from-aura-mint/20 to-aura-lavender/20'
-                    }`}>
-                      {isCompleted ? (
-                        <Check size={20} className="text-aura-mint" />
-                      ) : (
-                        <Icon size={20} className="text-aura-mint" />
-                      )}
-                    </div>
-                    <div className="flex-1 text-left">
-                      <h3 className={`font-medium text-foreground ${isCompleted ? 'line-through' : ''}`}>
-                        {rec.title}
-                      </h3>
-                      <p className="text-xs text-aura-slate/70">
-                        {rec.subtitle} · {rec.duration} · {getRecommendationLabel(rec.type)}
-                      </p>
-                    </div>
-                    <ChevronRight size={18} className="text-aura-slate/40" />
-                  </button>
-                  {/* Info button for tooltip */}
-                  {tooltip && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        showTooltip(rec.id);
-                      }}
-                      className="h-8 w-8 rounded-full bg-white/50 flex items-center justify-center flex-shrink-0 transition-transform active:scale-90"
-                    >
-                      <HelpCircle size={16} className="text-aura-slate/50" />
-                    </button>
+              <button
+                key={rec.id}
+                onClick={() => setSelectedRec(rec)}
+                className={`w-full glass rounded-xl p-4 flex items-center gap-3 transition-all active:scale-[0.99] ${
+                  isCompleted ? 'opacity-60' : ''
+                }`}
+              >
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  isCompleted
+                    ? 'bg-aura-mint/30'
+                    : 'bg-gradient-to-br from-aura-mint/20 to-aura-lavender/20'
+                }`}>
+                  {isCompleted ? (
+                    <Check size={20} className="text-aura-mint" />
+                  ) : (
+                    <Icon size={20} className="text-aura-mint" />
                   )}
                 </div>
-                {/* Tooltip for recommendation */}
-                {activeTooltip === rec.id && tooltip && (
-                  <div className="absolute right-0 top-full mt-2 z-40">
-                    <TooltipBubble
-                      tooltip={tooltip}
-                      onDismiss={() => dismissTooltip(rec.id, false)}
-                    />
-                  </div>
-                )}
-              </div>
+                <div className="flex-1 text-left">
+                  <h3 className={`font-medium text-foreground ${isCompleted ? 'line-through' : ''}`}>
+                    {rec.title}
+                  </h3>
+                  <p className="text-xs text-aura-slate/70">
+                    {rec.subtitle} · {rec.duration} · {getRecommendationLabel(rec.type)}
+                  </p>
+                </div>
+                <ChevronRight size={18} className="text-aura-slate/40" />
+              </button>
             );
           })}
         </div>
@@ -671,17 +604,16 @@ export function BioClock({ userName }: BioClockProps) {
               onClick={() => showTooltip('checklist')}
               className="h-6 w-6 rounded-full bg-white/30 flex items-center justify-center transition-transform active:scale-90"
             >
-              <HelpCircle size={12} className="text-aura-slate/50" />
+              <Info size={12} className="text-aura-slate/50" />
             </button>
           </div>
           {/* Checklist Tooltip */}
           {activeTooltip === 'checklist' && (
-            <div className="absolute right-0 bottom-full mb-2 z-40">
-              <TooltipBubble
-                tooltip={tooltips.checklist}
-                onDismiss={() => dismissTooltip('checklist', false)}
-              />
-            </div>
+            <TooltipBubble
+              tooltip={tooltips.checklist}
+              onDismiss={() => dismissTooltip('checklist', false)}
+              position="top"
+            />
           )}
           <div className="flex gap-2">
             {recommendations.map((rec) => {
