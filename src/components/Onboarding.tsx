@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ChevronRight, ChevronLeft, Sparkles, Brain, Heart, Target, Zap } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ChevronRight, ChevronLeft, Sparkles, Brain, Heart, Target, Zap, Camera, X, Upload } from 'lucide-react';
 import { useTelegram } from './TelegramProvider';
 
 // Типы профилей
@@ -215,7 +215,7 @@ interface OnboardingProps {
   onComplete: (answers: Record<string, string | string[]>, profile?: ProfileType) => void;
 }
 
-type ScreenType = 'welcome' | 'questions' | 'analyzing' | 'result';
+type ScreenType = 'welcome' | 'questions' | 'analyzing' | 'result' | 'photo';
 
 export function Onboarding({ onComplete }: OnboardingProps) {
   const [screen, setScreen] = useState<ScreenType>('welcome');
@@ -223,6 +223,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [calculatedProfile, setCalculatedProfile] = useState<ProfileType | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [beforePhoto, setBeforePhoto] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { hapticFeedback } = useTelegram();
 
   const question = questions[currentQuestion];
@@ -470,12 +472,153 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
         <div className="px-5 pb-8 safe-area-bottom">
           <button
-            onClick={handleComplete}
+            onClick={() => {
+              hapticFeedback('light');
+              setScreen('photo');
+            }}
             className="w-full btn-primary flex items-center justify-center gap-2"
           >
-            Начать программу
+            Далее
             <ChevronRight size={20} />
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Экран загрузки фото "До"
+  if (screen === 'photo') {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          setBeforePhoto(base64);
+          // Сохраняем фото в localStorage
+          localStorage.setItem('aura_before_photo', JSON.stringify({
+            photo: base64,
+            date: new Date().toISOString()
+          }));
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    const handleTakePhoto = () => {
+      hapticFeedback('light');
+      fileInputRef.current?.click();
+    };
+
+    const handleRemovePhoto = () => {
+      hapticFeedback('light');
+      setBeforePhoto(null);
+      localStorage.removeItem('aura_before_photo');
+    };
+
+    const handleFinish = () => {
+      hapticFeedback('medium');
+      handleComplete();
+    };
+
+    const handleSkip = () => {
+      hapticFeedback('light');
+      handleComplete();
+    };
+
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-aura-cream to-white flex flex-col">
+        <header className="px-5 pt-4 pb-2 safe-area-top">
+          <div className="flex items-center justify-center gap-2">
+            <Sparkles size={20} className="text-aura-mint" />
+            <span className="font-semibold text-foreground">AuraSync</span>
+          </div>
+        </header>
+
+        <main className="flex-1 px-5 py-6 flex flex-col">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-aura-lavender/20 text-aura-lavender-dark mb-4">
+              <Camera size={18} />
+              <span className="text-sm font-medium">Фото «До»</span>
+            </div>
+            <h1 className="text-xl font-bold text-foreground mb-2">Зафиксируйте точку старта</h1>
+            <p className="text-sm text-aura-slate/70">
+              Через 4 недели вы сравните результат. Это фото видите только вы.
+            </p>
+          </div>
+
+          {/* Photo upload area */}
+          <div className="flex-1 flex items-center justify-center">
+            {beforePhoto ? (
+              <div className="relative">
+                <img
+                  src={beforePhoto}
+                  alt="Before photo"
+                  className="w-64 h-80 object-cover rounded-3xl shadow-lg"
+                />
+                <button
+                  onClick={handleRemovePhoto}
+                  className="absolute -top-2 -right-2 h-8 w-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg"
+                >
+                  <X size={16} className="text-white" />
+                </button>
+                <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl p-3 text-center">
+                  <p className="text-xs text-aura-slate/70">Фото сохранено</p>
+                  <p className="text-xs font-medium text-foreground">
+                    {new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={handleTakePhoto}
+                className="w-64 h-80 rounded-3xl border-2 border-dashed border-aura-slate/20 flex flex-col items-center justify-center gap-4 bg-white/50 transition-all active:scale-[0.98]"
+              >
+                <div className="h-20 w-20 rounded-full bg-gradient-to-br from-aura-mint to-aura-lavender flex items-center justify-center">
+                  <Camera size={36} className="text-white" />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium text-foreground mb-1">Сделать фото</p>
+                  <p className="text-xs text-aura-slate/60">или выбрать из галереи</p>
+                </div>
+              </button>
+            )}
+          </div>
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="user"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+
+          {/* Tips */}
+          <div className="bg-aura-mint/10 rounded-2xl p-4 mt-4">
+            <p className="text-xs text-aura-slate/70 text-center">
+              <span className="font-medium text-foreground">Совет:</span> Сфотографируйте лицо при естественном освещении, без макияжа, с нейтральным выражением.
+            </p>
+          </div>
+        </main>
+
+        <div className="px-5 pb-8 safe-area-bottom space-y-3">
+          <button
+            onClick={handleFinish}
+            className="w-full btn-primary flex items-center justify-center gap-2"
+          >
+            {beforePhoto ? 'Начать программу' : 'Добавить позже'}
+            <ChevronRight size={20} />
+          </button>
+          {!beforePhoto && (
+            <button
+              onClick={handleSkip}
+              className="w-full py-3 text-sm text-aura-slate/60"
+            >
+              Пропустить
+            </button>
+          )}
         </div>
       </div>
     );
