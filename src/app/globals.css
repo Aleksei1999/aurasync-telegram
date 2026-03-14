@@ -271,3 +271,19 @@ html {
 .pb-tab-bar {
   padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
 }
+
+/* Scale in animation (for achievement popups) */
+.animate-scale-in {
+  animation: animate-scale-in 0.3s ease-out;
+}
+
+@keyframes animate-scale-in {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

@@ -47,10 +47,32 @@ interface Achievement {
 function calculateAuraScores(): AuraAxis[] {
   const completedTasks = JSON.parse(localStorage.getItem('aura_completed_tasks') || '{"tasks": []}');
   const streakData = JSON.parse(localStorage.getItem('aura_streak') || '{"streak": 0}');
+  const savedScores = localStorage.getItem('aura_map_scores');
   const tasks = completedTasks.tasks || [];
   const streak = streakData.streak || 0;
 
-  // Базовые значения (будут расти с активностью)
+  // Если есть сохранённые баллы из курсов, используем их
+  if (savedScores) {
+    const scores = JSON.parse(savedScores);
+    const cortisolResistance = Math.round(scores.cortisolResistance || 20);
+    const neuroFocus = Math.round(scores.neuroFocus || 20);
+    const somaticCalm = Math.round(scores.somaticCalm || 20);
+    const regeneration = Math.round(scores.regeneration || 20);
+    const emotionalEQ = Math.round(scores.emotionalEQ || 20);
+
+    // Добавляем бонус за streak
+    const streakBonus = streak * 2;
+
+    return buildAxesArray(
+      Math.min(100, cortisolResistance + streakBonus),
+      Math.min(100, neuroFocus + streakBonus),
+      Math.min(100, somaticCalm + streakBonus),
+      Math.min(100, regeneration + streakBonus),
+      Math.min(100, emotionalEQ + streakBonus)
+    );
+  }
+
+  // Базовые значения (будут расти с активностью) - fallback
   const hasDopamine = tasks.includes('dopamine_code');
   const hasJaw = tasks.includes('jaw_relaxation');
   const hasAlpha = tasks.includes('alpha_immersion');
@@ -62,6 +84,17 @@ function calculateAuraScores(): AuraAxis[] {
   const regeneration = Math.min(100, 15 + (hasAlpha ? 40 : 0) + (streak * 3));
   const emotionalEQ = Math.min(100, 20 + (tasks.length * 10) + (streak * 2));
 
+  return buildAxesArray(cortisolResistance, neuroFocus, somaticCalm, regeneration, emotionalEQ);
+}
+
+// Вспомогательная функция для построения массива осей
+function buildAxesArray(
+  cortisolResistance: number,
+  neuroFocus: number,
+  somaticCalm: number,
+  regeneration: number,
+  emotionalEQ: number
+): AuraAxis[] {
   return [
     {
       id: 'cortisol',
@@ -126,52 +159,96 @@ function calculateAuraScores(): AuraAxis[] {
   ];
 }
 
+// Расчёт достижений из курсов
+function calculateCourseAchievements(): { completedCourses: number; totalSessions: number } {
+  const savedProgress = localStorage.getItem('aura_course_progress');
+  if (!savedProgress) {
+    return { completedCourses: 0, totalSessions: 0 };
+  }
+
+  const allProgress = JSON.parse(savedProgress);
+  let completedCourses = 0;
+  let totalSessions = 0;
+
+  Object.values(allProgress).forEach((progress: unknown) => {
+    const courseProgress = progress as { completedSessions?: string[] };
+    const completed = courseProgress.completedSessions?.length || 0;
+    totalSessions += completed;
+    if (completed >= 7) {
+      completedCourses++;
+    }
+  });
+
+  return { completedCourses, totalSessions };
+}
+
 // Расчёт достижений
 function calculateAchievements(): Achievement[] {
   const streakData = JSON.parse(localStorage.getItem('aura_streak') || '{"streak": 0, "longestStreak": 0}');
   const completedTasks = JSON.parse(localStorage.getItem('aura_completed_tasks') || '{"tasks": []}');
   const tasks = completedTasks.tasks || [];
   const streak = streakData.streak || 0;
+  const { completedCourses, totalSessions } = calculateCourseAchievements();
 
   return [
     {
-      id: 'streak_5',
-      title: 'Свобода шеи',
-      description: '5 дней подряд без перерывов',
+      id: 'streak_3',
+      title: 'Стабилизация',
+      description: '3 дня практик — адаптация запущена',
       icon: Flame,
-      progress: Math.min(streak, 5),
-      target: 5,
-      isUnlocked: streak >= 5,
+      progress: Math.min(streak, 3),
+      target: 3,
+      isUnlocked: streak >= 3,
       triggerType: 'streak'
     },
     {
-      id: 'water_master',
-      title: 'Чистота системы',
-      description: 'Выполни водный протокол 5 раз',
-      icon: Droplets,
-      progress: tasks.includes('water_passport') ? 1 : 0,
-      target: 5,
-      isUnlocked: false,
-      triggerType: 'water'
+      id: 'streak_7',
+      title: 'Пластичность',
+      description: '7 дней — новые нейронные пути',
+      icon: Brain,
+      progress: Math.min(streak, 7),
+      target: 7,
+      isUnlocked: streak >= 7,
+      triggerType: 'streak'
     },
     {
-      id: 'neuro_speed',
-      title: 'Скорость потока',
-      description: 'Завершить 10 практик фокуса',
+      id: 'sessions_10',
+      title: 'Первые победы',
+      description: 'Завершить 10 сессий практик',
       icon: Zap,
-      progress: tasks.includes('dopamine_code') ? 1 : 0,
+      progress: Math.min(totalSessions, 10),
       target: 10,
-      isUnlocked: false,
+      isUnlocked: totalSessions >= 10,
       triggerType: 'practice'
     },
     {
-      id: 'face_sculptor',
-      title: 'Скульптура лица',
-      description: 'Расслабление челюсти 7 дней',
+      id: 'course_complete',
+      title: 'Нейронный апгрейд',
+      description: 'Полностью пройти один курс',
       icon: Target,
-      progress: tasks.includes('jaw_relaxation') ? 1 : 0,
-      target: 7,
-      isUnlocked: false,
+      progress: Math.min(completedCourses, 1),
+      target: 1,
+      isUnlocked: completedCourses >= 1,
+      triggerType: 'practice'
+    },
+    {
+      id: 'streak_21',
+      title: 'Суверенитет',
+      description: '21 день — привычка стала частью вас',
+      icon: Shield,
+      progress: Math.min(streak, 21),
+      target: 21,
+      isUnlocked: streak >= 21,
+      triggerType: 'streak'
+    },
+    {
+      id: 'tasks_complete',
+      title: 'Ритуал дня',
+      description: 'Выполни все 4 задания дня',
+      icon: Droplets,
+      progress: tasks.length,
+      target: 4,
+      isUnlocked: tasks.length >= 4,
       triggerType: 'tasks'
     }
   ];
