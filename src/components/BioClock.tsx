@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Sun, Moon, Sunrise, CloudSun, Headphones, Droplets, BookOpen, ChevronRight, X, Check, Play, Pause, Sparkles } from 'lucide-react';
+import { Sun, Moon, Sunrise, CloudSun, Headphones, Droplets, BookOpen, ChevronRight, X, Check, Play, Pause, Sparkles, Flame } from 'lucide-react';
 
 type TimeOfDay = 'morning' | 'day' | 'evening' | 'night';
 type RecommendationType = 'listen' | 'read' | 'checklist';
@@ -247,6 +247,7 @@ export function BioClock({ userName }: BioClockProps) {
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [toast, setToast] = useState<{ title: string; message: string } | null>(null);
+  const [streak, setStreak] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -271,6 +272,50 @@ export function BioClock({ userName }: BioClockProps) {
       if (data.date === today) {
         setCompletedTasks(data.tasks);
       }
+    }
+  }, []);
+
+  // Streak tracking
+  useEffect(() => {
+    const today = new Date();
+    const todayStr = today.toDateString();
+
+    const savedStreak = localStorage.getItem('aura_streak');
+    if (savedStreak) {
+      const data = JSON.parse(savedStreak);
+      const lastDate = new Date(data.lastVisit);
+      const diffTime = today.getTime() - lastDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (data.lastVisit === todayStr) {
+        // Already visited today
+        setStreak(data.streak);
+      } else if (diffDays === 1) {
+        // Visited yesterday - continue streak
+        const newStreak = data.streak + 1;
+        setStreak(newStreak);
+        localStorage.setItem('aura_streak', JSON.stringify({
+          streak: newStreak,
+          lastVisit: todayStr,
+          longestStreak: Math.max(data.longestStreak || 0, newStreak)
+        }));
+      } else if (diffDays > 1) {
+        // Missed a day - reset streak
+        setStreak(1);
+        localStorage.setItem('aura_streak', JSON.stringify({
+          streak: 1,
+          lastVisit: todayStr,
+          longestStreak: data.longestStreak || data.streak
+        }));
+      }
+    } else {
+      // First visit ever
+      setStreak(1);
+      localStorage.setItem('aura_streak', JSON.stringify({
+        streak: 1,
+        lastVisit: todayStr,
+        longestStreak: 1
+      }));
     }
   }, []);
 
@@ -370,11 +415,25 @@ export function BioClock({ userName }: BioClockProps) {
     <>
       <div className={`${config.gradient} rounded-3xl p-6 animated-gradient`}>
         {/* Header */}
-        <div className="mb-4">
-          <p className="text-sm text-aura-slate/70 font-medium">{currentTime}</p>
-          <h2 className="text-2xl font-semibold text-foreground">
-            {config.greeting}{userName ? `, ${userName}` : ''}
-          </h2>
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <p className="text-sm text-aura-slate/70 font-medium">{currentTime}</p>
+            <h2 className="text-2xl font-semibold text-foreground">
+              {config.greeting}{userName ? `, ${userName}` : ''}
+            </h2>
+          </div>
+          {/* Streak Badge */}
+          {streak > 0 && (
+            <div className="flex items-center gap-1.5 bg-white/70 backdrop-blur-sm rounded-full px-3 py-1.5">
+              <Flame size={16} className={streak >= 7 ? 'text-orange-500' : 'text-aura-mint'} />
+              <span className={`text-sm font-semibold ${streak >= 7 ? 'text-orange-500' : 'text-foreground'}`}>
+                {streak}
+              </span>
+              <span className="text-xs text-aura-slate/60">
+                {streak === 1 ? 'день' : streak < 5 ? 'дня' : 'дней'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Suggestion */}
