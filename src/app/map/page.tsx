@@ -2,216 +2,518 @@
 
 import { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
-import { Map, Star, Lock, CheckCircle, ChevronRight, Sparkles, Heart, Brain, Moon, Sun, Flower } from 'lucide-react';
+import {
+  TrendingUp,
+  Flame,
+  Droplets,
+  Brain,
+  Heart,
+  Moon,
+  Shield,
+  ChevronRight,
+  Award,
+  Zap,
+  Target,
+  Sparkles,
+  Check
+} from 'lucide-react';
 
-interface MapNode {
+// Типы для Aura-Map
+interface AuraAxis {
+  id: string;
+  name: string;
+  shortName: string;
+  value: number;
+  previousValue: number;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  color: string;
+  colorClass: string;
+  bgClass: string;
+  description: string;
+}
+
+interface Achievement {
   id: string;
   title: string;
   description: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
-  isCompleted: boolean;
-  isLocked: boolean;
-  level: number;
+  progress: number;
+  target: number;
+  isUnlocked: boolean;
+  triggerType: 'streak' | 'tasks' | 'water' | 'practice';
 }
 
-const developmentMap: MapNode[] = [
-  {
-    id: 'basics',
-    title: 'Основы осознанности',
-    description: 'Первые шаги к гармонии',
-    icon: Star,
-    isCompleted: false,
-    isLocked: false,
-    level: 1,
-  },
-  {
-    id: 'breathing',
-    title: 'Дыхательные практики',
-    description: 'Управление энергией через дыхание',
-    icon: Sun,
-    isCompleted: false,
-    isLocked: false,
-    level: 1,
-  },
-  {
-    id: 'emotions',
-    title: 'Эмоциональный интеллект',
-    description: 'Понимание своих эмоций',
-    icon: Heart,
-    isCompleted: false,
-    isLocked: true,
-    level: 2,
-  },
-  {
-    id: 'body',
-    title: 'Связь с телом',
-    description: 'Телесные практики и осознанность',
-    icon: Flower,
-    isCompleted: false,
-    isLocked: true,
-    level: 2,
-  },
-  {
-    id: 'mind',
-    title: 'Ясность ума',
-    description: 'Медитации для концентрации',
-    icon: Brain,
-    isCompleted: false,
-    isLocked: true,
-    level: 3,
-  },
-  {
-    id: 'sleep',
-    title: 'Мастер сна',
-    description: 'Глубокий восстановительный сон',
-    icon: Moon,
-    isCompleted: false,
-    isLocked: true,
-    level: 3,
-  },
-];
+// Расчёт баллов из localStorage
+function calculateAuraScores(): AuraAxis[] {
+  const completedTasks = JSON.parse(localStorage.getItem('aura_completed_tasks') || '{"tasks": []}');
+  const streakData = JSON.parse(localStorage.getItem('aura_streak') || '{"streak": 0}');
+  const tasks = completedTasks.tasks || [];
+  const streak = streakData.streak || 0;
+
+  // Базовые значения (будут расти с активностью)
+  const hasDopamine = tasks.includes('dopamine_code');
+  const hasJaw = tasks.includes('jaw_relaxation');
+  const hasAlpha = tasks.includes('alpha_immersion');
+
+  // Расчёт значений (0-100)
+  const cortisolResistance = Math.min(100, 20 + (hasDopamine ? 25 : 0) + (hasJaw ? 20 : 0) + (streak * 3));
+  const neuroFocus = Math.min(100, 15 + (hasDopamine ? 30 : 0) + (streak * 4));
+  const somaticCalm = Math.min(100, 10 + (hasJaw ? 35 : 0) + (hasAlpha ? 20 : 0) + (streak * 2));
+  const regeneration = Math.min(100, 15 + (hasAlpha ? 40 : 0) + (streak * 3));
+  const emotionalEQ = Math.min(100, 20 + (tasks.length * 10) + (streak * 2));
+
+  return [
+    {
+      id: 'cortisol',
+      name: 'Кортизоловая резистентность',
+      shortName: 'Стресс',
+      value: cortisolResistance,
+      previousValue: Math.max(0, cortisolResistance - 10),
+      icon: Shield,
+      color: '#8BCFC0',
+      colorClass: 'text-aura-mint',
+      bgClass: 'bg-aura-mint/20',
+      description: 'Умение системы сбрасывать стресс'
+    },
+    {
+      id: 'neuro',
+      name: 'Нейро-фокус',
+      shortName: 'Фокус',
+      value: neuroFocus,
+      previousValue: Math.max(0, neuroFocus - 8),
+      icon: Brain,
+      color: '#B8A9C9',
+      colorClass: 'text-aura-lavender',
+      bgClass: 'bg-aura-lavender/20',
+      description: 'Скорость входа в состояние потока'
+    },
+    {
+      id: 'somatic',
+      name: 'Соматический покой',
+      shortName: 'Тело',
+      value: somaticCalm,
+      previousValue: Math.max(0, somaticCalm - 12),
+      icon: Heart,
+      color: '#F5CEB8',
+      colorClass: 'text-aura-peach',
+      bgClass: 'bg-aura-peach/20',
+      description: 'Отсутствие физических зажимов'
+    },
+    {
+      id: 'regeneration',
+      name: 'Глубина регенерации',
+      shortName: 'Сон',
+      value: regeneration,
+      previousValue: Math.max(0, regeneration - 15),
+      icon: Moon,
+      color: '#7B68EE',
+      colorClass: 'text-purple-500',
+      bgClass: 'bg-purple-100',
+      description: 'Качество восстановления'
+    },
+    {
+      id: 'emotional',
+      name: 'Эмоциональный интеллект',
+      shortName: 'Эмоции',
+      value: emotionalEQ,
+      previousValue: Math.max(0, emotionalEQ - 5),
+      icon: Sparkles,
+      color: '#FFB366',
+      colorClass: 'text-orange-400',
+      bgClass: 'bg-orange-100',
+      description: 'Гибкость эмоциональных реакций'
+    }
+  ];
+}
+
+// Расчёт достижений
+function calculateAchievements(): Achievement[] {
+  const streakData = JSON.parse(localStorage.getItem('aura_streak') || '{"streak": 0, "longestStreak": 0}');
+  const completedTasks = JSON.parse(localStorage.getItem('aura_completed_tasks') || '{"tasks": []}');
+  const tasks = completedTasks.tasks || [];
+  const streak = streakData.streak || 0;
+
+  return [
+    {
+      id: 'streak_5',
+      title: 'Свобода шеи',
+      description: '5 дней подряд без перерывов',
+      icon: Flame,
+      progress: Math.min(streak, 5),
+      target: 5,
+      isUnlocked: streak >= 5,
+      triggerType: 'streak'
+    },
+    {
+      id: 'water_master',
+      title: 'Чистота системы',
+      description: 'Выполни водный протокол 5 раз',
+      icon: Droplets,
+      progress: tasks.includes('water_passport') ? 1 : 0,
+      target: 5,
+      isUnlocked: false,
+      triggerType: 'water'
+    },
+    {
+      id: 'neuro_speed',
+      title: 'Скорость потока',
+      description: 'Завершить 10 практик фокуса',
+      icon: Zap,
+      progress: tasks.includes('dopamine_code') ? 1 : 0,
+      target: 10,
+      isUnlocked: false,
+      triggerType: 'practice'
+    },
+    {
+      id: 'face_sculptor',
+      title: 'Скульптура лица',
+      description: 'Расслабление челюсти 7 дней',
+      icon: Target,
+      progress: tasks.includes('jaw_relaxation') ? 1 : 0,
+      target: 7,
+      isUnlocked: false,
+      triggerType: 'tasks'
+    }
+  ];
+}
+
+// Компонент радарной диаграммы
+function AuraRadarChart({ axes }: { axes: AuraAxis[] }) {
+  const size = 280;
+  const center = size / 2;
+  const maxRadius = 100;
+  const levels = 5;
+
+  // Функция для расчёта координат точки
+  const getPoint = (index: number, value: number) => {
+    const angle = (Math.PI * 2 * index) / axes.length - Math.PI / 2;
+    const radius = (value / 100) * maxRadius;
+    return {
+      x: center + radius * Math.cos(angle),
+      y: center + radius * Math.sin(angle)
+    };
+  };
+
+  // Создаём путь для текущих значений
+  const currentPath = axes.map((axis, i) => {
+    const point = getPoint(i, axis.value);
+    return `${i === 0 ? 'M' : 'L'} ${point.x} ${point.y}`;
+  }).join(' ') + ' Z';
+
+  // Создаём путь для предыдущих значений
+  const previousPath = axes.map((axis, i) => {
+    const point = getPoint(i, axis.previousValue);
+    return `${i === 0 ? 'M' : 'L'} ${point.x} ${point.y}`;
+  }).join(' ') + ' Z';
+
+  return (
+    <div className="relative flex items-center justify-center">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {/* Фоновые круги */}
+        {[...Array(levels)].map((_, i) => (
+          <circle
+            key={i}
+            cx={center}
+            cy={center}
+            r={((i + 1) / levels) * maxRadius}
+            fill="none"
+            stroke="rgba(139, 207, 192, 0.15)"
+            strokeWidth="1"
+          />
+        ))}
+
+        {/* Оси */}
+        {axes.map((_, i) => {
+          const point = getPoint(i, 100);
+          return (
+            <line
+              key={i}
+              x1={center}
+              y1={center}
+              x2={point.x}
+              y2={point.y}
+              stroke="rgba(139, 207, 192, 0.2)"
+              strokeWidth="1"
+            />
+          );
+        })}
+
+        {/* Предыдущие значения (полупрозрачный) */}
+        <path
+          d={previousPath}
+          fill="rgba(184, 169, 201, 0.2)"
+          stroke="rgba(184, 169, 201, 0.4)"
+          strokeWidth="2"
+        />
+
+        {/* Текущие значения */}
+        <path
+          d={currentPath}
+          fill="rgba(139, 207, 192, 0.3)"
+          stroke="#8BCFC0"
+          strokeWidth="2.5"
+        />
+
+        {/* Точки на текущих значениях */}
+        {axes.map((axis, i) => {
+          const point = getPoint(i, axis.value);
+          return (
+            <circle
+              key={i}
+              cx={point.x}
+              cy={point.y}
+              r="5"
+              fill={axis.color}
+              stroke="white"
+              strokeWidth="2"
+            />
+          );
+        })}
+      </svg>
+
+      {/* Подписи осей */}
+      {axes.map((axis, i) => {
+        const angle = (Math.PI * 2 * i) / axes.length - Math.PI / 2;
+        const labelRadius = maxRadius + 35;
+        const x = center + labelRadius * Math.cos(angle);
+        const y = center + labelRadius * Math.sin(angle);
+        const Icon = axis.icon;
+
+        return (
+          <div
+            key={i}
+            className="absolute flex flex-col items-center"
+            style={{
+              left: x,
+              top: y,
+              transform: 'translate(-50%, -50%)'
+            }}
+          >
+            <div className={`h-7 w-7 rounded-lg flex items-center justify-center mb-1 ${axis.bgClass}`}>
+              <Icon size={14} className={axis.colorClass} />
+            </div>
+            <span className="text-[10px] text-aura-slate/70 text-center whitespace-nowrap">
+              {axis.shortName}
+            </span>
+            <span className="text-xs font-semibold text-foreground">{axis.value}%</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function MapPage() {
-  const [selectedNode, setSelectedNode] = useState<MapNode | null>(null);
+  const [axes, setAxes] = useState<AuraAxis[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [selectedAxis, setSelectedAxis] = useState<AuraAxis | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [totalScore, setTotalScore] = useState(0);
 
-  const levels = [1, 2, 3];
+  useEffect(() => {
+    const calculatedAxes = calculateAuraScores();
+    setAxes(calculatedAxes);
+    setAchievements(calculateAchievements());
+
+    const streakData = JSON.parse(localStorage.getItem('aura_streak') || '{"streak": 0}');
+    setStreak(streakData.streak || 0);
+
+    // Общий балл — среднее всех осей
+    const avg = Math.round(calculatedAxes.reduce((sum, a) => sum + a.value, 0) / calculatedAxes.length);
+    setTotalScore(avg);
+  }, []);
+
+  const unlockedCount = achievements.filter(a => a.isUnlocked).length;
 
   return (
     <div className="min-h-screen bg-background pb-tab-bar">
       {/* Header */}
-      <header className="px-5 pt-4 pb-4 safe-area-top">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-aura-lavender to-aura-lavender-dark flex items-center justify-center">
-            <Map size={20} className="text-white" />
-          </div>
+      <header className="px-5 pt-4 pb-2 safe-area-top">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-bold text-lg text-foreground">Карта развития</h1>
-            <p className="text-xs text-aura-slate/60">Твой путь к балансу</p>
+            <h1 className="font-bold text-xl text-foreground">Aura-Map</h1>
+            <p className="text-sm text-aura-slate/60">Твоя биометрия баланса</p>
           </div>
-        </div>
-
-        {/* Progress */}
-        <div className="card-soft p-4 mt-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-foreground">Общий прогресс</span>
-            <span className="text-sm text-aura-mint-dark font-medium">0%</span>
-          </div>
-          <div className="progress-bar">
-            <div
-              className="progress-bar-fill bg-gradient-to-r from-aura-lavender to-aura-mint"
-              style={{ width: '0%' }}
-            />
-          </div>
-          <div className="flex items-center justify-between mt-2 text-xs text-aura-slate/60">
-            <span>Уровень 1</span>
-            <span>0/6 навыков</span>
+          <div className="flex items-center gap-2">
+            {streak > 0 && (
+              <div className="flex items-center gap-1 bg-aura-peach/20 rounded-full px-3 py-1">
+                <Flame size={14} className="text-aura-peach" />
+                <span className="text-sm font-semibold text-aura-peach">{streak}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1 bg-aura-mint/20 rounded-full px-3 py-1">
+              <TrendingUp size={14} className="text-aura-mint" />
+              <span className="text-sm font-semibold text-aura-mint">{totalScore}%</span>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Map content */}
-      <main className="px-5 py-4">
-        {levels.map((level) => (
-          <div key={level} className="mb-8">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-6 w-6 rounded-full bg-aura-lavender-light flex items-center justify-center">
-                <span className="text-xs font-bold text-aura-lavender-dark">{level}</span>
+      <main className="px-5 py-4 space-y-6">
+        {/* Radar Chart */}
+        <div className="bg-white rounded-3xl p-6 shadow-sm">
+          <div className="text-center mb-2">
+            <h2 className="font-semibold text-foreground">Баланс систем</h2>
+            <p className="text-xs text-aura-slate/60">Обновляется при выполнении практик</p>
+          </div>
+          <AuraRadarChart axes={axes} />
+          <p className="text-center text-xs text-aura-slate/50 mt-4">
+            Полупрозрачная зона — предыдущие значения
+          </p>
+        </div>
+
+        {/* Axis Details */}
+        <div className="space-y-2">
+          <h3 className="font-semibold text-foreground px-1">Параметры системы</h3>
+          {axes.map((axis) => {
+            const Icon = axis.icon;
+            const delta = axis.value - axis.previousValue;
+            return (
+              <button
+                key={axis.id}
+                onClick={() => setSelectedAxis(axis)}
+                className="w-full bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm active:scale-[0.99] transition-transform"
+              >
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${axis.bgClass}`}>
+                  <Icon size={20} className={axis.colorClass} />
+                </div>
+                <div className="flex-1 text-left">
+                  <h4 className="font-medium text-foreground text-sm">{axis.name}</h4>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex-1 h-1.5 bg-aura-slate/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${axis.value}%`, backgroundColor: axis.color }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-foreground">{axis.value}%</span>
+                  </div>
+                </div>
+                {delta > 0 && (
+                  <div className="flex items-center gap-0.5 text-aura-mint">
+                    <TrendingUp size={14} />
+                    <span className="text-xs font-medium">+{delta}</span>
+                  </div>
+                )}
+                <ChevronRight size={16} className="text-aura-slate/30" />
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Achievements */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="font-semibold text-foreground">Достижения</h3>
+            <span className="text-xs text-aura-slate/60">{unlockedCount}/{achievements.length}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {achievements.map((achievement) => {
+              const Icon = achievement.icon;
+              const progress = (achievement.progress / achievement.target) * 100;
+              return (
+                <div
+                  key={achievement.id}
+                  className={`bg-white rounded-2xl p-4 shadow-sm ${
+                    achievement.isUnlocked ? 'ring-2 ring-aura-mint' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                      achievement.isUnlocked ? 'bg-aura-mint' : 'bg-aura-slate/10'
+                    }`}>
+                      {achievement.isUnlocked ? (
+                        <Check size={16} className="text-white" />
+                      ) : (
+                        <Icon size={16} className="text-aura-slate/50" />
+                      )}
+                    </div>
+                    {achievement.isUnlocked && (
+                      <Award size={16} className="text-aura-mint" />
+                    )}
+                  </div>
+                  <h4 className="font-medium text-foreground text-sm mb-1">{achievement.title}</h4>
+                  <p className="text-[10px] text-aura-slate/60 mb-2">{achievement.description}</p>
+                  <div className="h-1.5 bg-aura-slate/10 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        achievement.isUnlocked ? 'bg-aura-mint' : 'bg-aura-lavender'
+                      }`}
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-aura-slate/50 mt-1 text-right">
+                    {achievement.progress}/{achievement.target}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Weekly Stats */}
+        <div className="bg-gradient-to-br from-aura-mint/10 to-aura-lavender/10 rounded-3xl p-5">
+          <h3 className="font-semibold text-foreground mb-4">Капитал состояний</h3>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-2xl font-bold text-aura-mint">{streak}</p>
+              <p className="text-xs text-aura-slate/60">дней подряд</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-aura-lavender">{totalScore}%</p>
+              <p className="text-xs text-aura-slate/60">общий баланс</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-aura-peach">{unlockedCount}</p>
+              <p className="text-xs text-aura-slate/60">достижений</p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Axis Detail Modal */}
+      {selectedAxis && (
+        <div className="fixed inset-0 z-50 flex items-end">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setSelectedAxis(null)}
+          />
+          <div className="relative w-full bg-white rounded-t-3xl p-5 animate-slide-up safe-area-bottom">
+            <div className="flex items-start gap-4 mb-4">
+              <div className={`h-14 w-14 rounded-xl flex items-center justify-center ${selectedAxis.bgClass}`}>
+                <selectedAxis.icon size={28} className={selectedAxis.colorClass} />
               </div>
-              <span className="font-medium text-foreground">Уровень {level}</span>
-              {level > 1 && (
-                <Lock size={14} className="text-aura-slate/40 ml-auto" />
+              <div className="flex-1">
+                <h3 className="font-bold text-lg text-foreground">{selectedAxis.name}</h3>
+                <p className="text-sm text-aura-slate/60">{selectedAxis.description}</p>
+              </div>
+            </div>
+
+            <div className="bg-aura-slate/5 rounded-2xl p-4 mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-aura-slate/70">Текущий уровень</span>
+                <span className="font-bold text-foreground">{selectedAxis.value}%</span>
+              </div>
+              <div className="h-3 bg-aura-slate/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${selectedAxis.value}%`, backgroundColor: selectedAxis.color }}
+                />
+              </div>
+              {selectedAxis.value - selectedAxis.previousValue > 0 && (
+                <p className="text-xs text-aura-mint mt-2 flex items-center gap-1">
+                  <TrendingUp size={12} />
+                  +{selectedAxis.value - selectedAxis.previousValue}% за неделю
+                </p>
               )}
             </div>
 
-            <div className="space-y-3">
-              {developmentMap
-                .filter((node) => node.level === level)
-                .map((node) => {
-                  const Icon = node.icon;
-                  return (
-                    <button
-                      key={node.id}
-                      onClick={() => !node.isLocked && setSelectedNode(node)}
-                      disabled={node.isLocked}
-                      className={`w-full card-soft p-4 flex items-center gap-4 transition-all ${
-                        node.isLocked ? 'opacity-50' : 'active:scale-[0.99]'
-                      } ${selectedNode?.id === node.id ? 'ring-2 ring-aura-lavender' : ''}`}
-                    >
-                      <div
-                        className={`h-12 w-12 rounded-xl flex items-center justify-center ${
-                          node.isCompleted
-                            ? 'bg-aura-mint'
-                            : node.isLocked
-                            ? 'bg-aura-slate/10'
-                            : 'bg-aura-lavender-light'
-                        }`}
-                      >
-                        {node.isCompleted ? (
-                          <CheckCircle size={24} className="text-white" />
-                        ) : node.isLocked ? (
-                          <Lock size={20} className="text-aura-slate/40" />
-                        ) : (
-                          <Icon size={24} className="text-aura-lavender-dark" />
-                        )}
-                      </div>
-                      <div className="flex-1 text-left">
-                        <h4 className="font-medium text-foreground">{node.title}</h4>
-                        <p className="text-sm text-aura-slate/60">{node.description}</p>
-                      </div>
-                      {!node.isLocked && (
-                        <ChevronRight size={20} className="text-aura-slate/40" />
-                      )}
-                    </button>
-                  );
-                })}
-            </div>
-
-            {/* Connection line */}
-            {level < 3 && (
-              <div className="flex justify-center my-4">
-                <div className="w-0.5 h-8 bg-aura-slate/20" />
-              </div>
-            )}
-          </div>
-        ))}
-      </main>
-
-      {/* Selected node detail */}
-      {selectedNode && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="w-full bg-white rounded-t-3xl p-5 animate-slide-up safe-area-bottom">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="h-14 w-14 rounded-xl bg-aura-lavender-light flex items-center justify-center">
-                <selectedNode.icon size={28} className="text-aura-lavender-dark" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-lg text-foreground">{selectedNode.title}</h3>
-                <p className="text-sm text-aura-slate/60">{selectedNode.description}</p>
-              </div>
-            </div>
-
-            <div className="space-y-3 mb-6">
-              <div className="flex items-center gap-2 text-sm text-aura-slate/80">
-                <Sparkles size={16} className="text-aura-mint" />
-                <span>5 практик в модуле</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-aura-slate/80">
-                <Star size={16} className="text-aura-peach" />
-                <span>+50 XP за завершение</span>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setSelectedNode(null)}
-                className="flex-1 btn-secondary"
-              >
-                Закрыть
-              </button>
-              <button className="flex-1 btn-primary">
-                Начать
-              </button>
-            </div>
+            <button
+              onClick={() => setSelectedAxis(null)}
+              className="w-full btn-primary"
+            >
+              Закрыть
+            </button>
           </div>
         </div>
       )}
