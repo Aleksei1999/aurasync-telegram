@@ -1,17 +1,34 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Sun, Moon, Sunrise, CloudSun } from 'lucide-react';
+import { Sun, Moon, Sunrise, CloudSun, Headphones, Droplets, BookOpen, ChevronRight, X, Check } from 'lucide-react';
 
 type TimeOfDay = 'morning' | 'day' | 'evening' | 'night';
+type RecommendationType = 'listen' | 'read' | 'checklist';
+
+interface Recommendation {
+  id: string;
+  title: string;
+  subtitle: string;
+  duration: string;
+  type: RecommendationType;
+  content: {
+    description: string;
+    sections: {
+      title: string;
+      items: string[];
+    }[];
+    preparation?: string[];
+    note?: string;
+    buttonText: string;
+  };
+}
 
 interface TimeConfig {
   greeting: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   gradient: string;
   suggestion: string;
-  practice: string;
-  duration: string;
 }
 
 const timeConfigs: Record<TimeOfDay, TimeConfig> = {
@@ -20,34 +37,137 @@ const timeConfigs: Record<TimeOfDay, TimeConfig> = {
     icon: Sunrise,
     gradient: 'bg-morning',
     suggestion: 'Начни день с намерением',
-    practice: 'Утренняя энергия',
-    duration: '5 мин',
   },
   day: {
     greeting: 'Добрый день',
     icon: Sun,
     gradient: 'bg-day',
     suggestion: 'Сохраняй фокус и баланс',
-    practice: 'Дневная перезагрузка',
-    duration: '3 мин',
   },
   evening: {
     greeting: 'Добрый вечер',
     icon: CloudSun,
     gradient: 'bg-evening',
     suggestion: 'Время расслабиться и отпустить день',
-    practice: 'Вечернее спокойствие',
-    duration: '7 мин',
   },
   night: {
     greeting: 'Доброй ночи',
     icon: Moon,
     gradient: 'bg-evening',
     suggestion: 'Подготовься к глубокому сну',
-    practice: 'Подготовка ко сну',
-    duration: '10 мин',
   },
 };
+
+const recommendations: Recommendation[] = [
+  {
+    id: 'dopamine_code',
+    title: 'Код Дофамина',
+    subtitle: 'Утренняя прошивка',
+    duration: '7 мин',
+    type: 'listen',
+    content: {
+      description: '7 минут, чтобы перехватить управление своей биохимией и выйти из режима «выживания».',
+      sections: [
+        {
+          title: 'Что внутри',
+          items: [
+            'Сброс стресса: Дыхательный ритм 4-2-6 для принудительного снижения кортизола',
+            'Нейро-апгрейд: Активация центров радости и фокуса через визуализацию',
+            'Эстетика: Снятие мышечных зажимов лица — естественный лифтинг'
+          ]
+        }
+      ],
+      preparation: [
+        'Наушники (обязательно для бинауральных ритмов)',
+        'Прямая спина (сигнал мозгу о вашей уверенности)'
+      ],
+      note: 'Результат накопительный. Сегодня вы создаёте нейронную связь, через 21 день она станет вашей новой чертой характера.',
+      buttonText: 'Начать практику'
+    }
+  },
+  {
+    id: 'water_passport',
+    title: 'Водный паспорт',
+    subtitle: 'Персональный лимит',
+    duration: '1 мин',
+    type: 'read',
+    content: {
+      description: 'Настройка биологического растворителя. Твоя норма: 30 мл на 1 кг веса.',
+      sections: [
+        {
+          title: 'Зачем это нужно',
+          items: [
+            'Молекулярный клининг: Кортизол и продукты его распада — это токсичный «мусор». Чтобы вымыть его из тканей и убрать «кортизоловое лицо», организму нужен растворитель.',
+            'Проводимость мозга: Твои нейроны погружены в спинномозговую жидкость. При обезвоживании она становится вязкой, что замедляет передачу импульсов.',
+            'Запуск лимфодренажа: Лимфа не имеет насоса. Чтобы она не превращалась в «болото», нужен объём жидкости.'
+          ]
+        },
+        {
+          title: 'Инструкция',
+          items: [
+            'Метод: Пей порциями по 200 мл каждые 1.5–2 часа',
+            'Визуализация: Представь, что каждый глоток очищает твою систему'
+          ]
+        }
+      ],
+      note: 'Твой результат: Устранение «когнитивного тумана» и возвращение острых скул уже через 24 часа.',
+      buttonText: 'Отметить в чек-листе'
+    }
+  },
+  {
+    id: 'neural_reboot',
+    title: 'Нейро-перезагрузка',
+    subtitle: 'Дневной сброс',
+    duration: '3 мин',
+    type: 'listen',
+    content: {
+      description: 'Быстрая техника для восстановления фокуса и снятия накопленного напряжения в середине дня.',
+      sections: [
+        {
+          title: 'Что внутри',
+          items: [
+            'Микро-медитация: Техника «5-4-3-2-1» для мгновенного заземления',
+            'Сброс напряжения: Точечное расслабление плеч, челюсти и лба',
+            'Фокус-активация: Дыхательный паттерн для ясности мышления'
+          ]
+        }
+      ],
+      preparation: [
+        'Найди тихое место на 3 минуты',
+        'Можно делать сидя за рабочим столом'
+      ],
+      note: 'Идеально использовать между встречами или когда чувствуешь «туман в голове».',
+      buttonText: 'Начать практику'
+    }
+  },
+  {
+    id: 'evening_protocol',
+    title: 'Вечерний протокол',
+    subtitle: 'Подготовка ко сну',
+    duration: '10 мин',
+    type: 'listen',
+    content: {
+      description: 'Техника «Сон Спецслужб» для гарантированного глубокого восстановления.',
+      sections: [
+        {
+          title: 'Что внутри',
+          items: [
+            'Слив дня: Ментальная выгрузка всех незавершённых задач',
+            'Альфа-погружение: Плавный переход мозга в режим восстановления',
+            'Телесное сканирование: Последовательное расслабление всех групп мышц'
+          ]
+        }
+      ],
+      preparation: [
+        'За 30 минут до сна',
+        'Приглушённый свет',
+        'Комфортная поза лёжа'
+      ],
+      note: 'Регулярная практика сокращает время засыпания до 5-7 минут.',
+      buttonText: 'Начать практику'
+    }
+  }
+];
 
 function getTimeOfDay(): TimeOfDay {
   const hour = new Date().getHours();
@@ -57,14 +177,42 @@ function getTimeOfDay(): TimeOfDay {
   return 'night';
 }
 
+function getRecommendationIcon(type: RecommendationType) {
+  switch (type) {
+    case 'listen':
+      return Headphones;
+    case 'read':
+      return BookOpen;
+    case 'checklist':
+      return Check;
+    default:
+      return Droplets;
+  }
+}
+
+function getRecommendationLabel(type: RecommendationType) {
+  switch (type) {
+    case 'listen':
+      return 'Слушать';
+    case 'read':
+      return 'Читать';
+    case 'checklist':
+      return 'Чек-лист';
+    default:
+      return '';
+  }
+}
+
 interface BioClockProps {
   userName?: string;
   onStartPractice?: () => void;
 }
 
-export function BioClock({ userName, onStartPractice }: BioClockProps) {
+export function BioClock({ userName }: BioClockProps) {
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning');
   const [currentTime, setCurrentTime] = useState('');
+  const [selectedRec, setSelectedRec] = useState<Recommendation | null>(null);
+  const [completedTasks, setCompletedTasks] = useState<string[]>([]);
 
   useEffect(() => {
     const updateTime = () => {
@@ -80,78 +228,189 @@ export function BioClock({ userName, onStartPractice }: BioClockProps) {
     return () => clearInterval(interval);
   }, []);
 
-  const config = timeConfigs[timeOfDay];
-  const Icon = config.icon;
-
-  // 3 рекомендации на основе времени суток
-  const getRecommendations = () => {
-    const baseRecs = [
-      { title: config.practice, duration: config.duration },
-    ];
-
-    if (timeOfDay === 'morning') {
-      baseRecs.push(
-        { title: 'Дыхание энергии', duration: '3 мин' },
-        { title: 'Настрой на день', duration: '5 мин' }
-      );
-    } else if (timeOfDay === 'day') {
-      baseRecs.push(
-        { title: 'Быстрая перезагрузка', duration: '2 мин' },
-        { title: 'Фокус и концентрация', duration: '5 мин' }
-      );
-    } else if (timeOfDay === 'evening') {
-      baseRecs.push(
-        { title: 'Снятие напряжения', duration: '5 мин' },
-        { title: 'Благодарность дню', duration: '3 мин' }
-      );
-    } else {
-      baseRecs.push(
-        { title: 'Глубокое расслабление', duration: '10 мин' },
-        { title: 'Дыхание для сна', duration: '5 мин' }
-      );
+  useEffect(() => {
+    const saved = localStorage.getItem('aura_completed_tasks');
+    if (saved) {
+      const data = JSON.parse(saved);
+      const today = new Date().toDateString();
+      if (data.date === today) {
+        setCompletedTasks(data.tasks);
+      }
     }
+  }, []);
 
-    return baseRecs;
+  const handleComplete = (id: string) => {
+    const newTasks = completedTasks.includes(id)
+      ? completedTasks.filter(t => t !== id)
+      : [...completedTasks, id];
+
+    setCompletedTasks(newTasks);
+    localStorage.setItem('aura_completed_tasks', JSON.stringify({
+      date: new Date().toDateString(),
+      tasks: newTasks
+    }));
+    setSelectedRec(null);
   };
 
-  const recommendations = getRecommendations();
+  const config = timeConfigs[timeOfDay];
 
   return (
-    <div className={`${config.gradient} rounded-3xl p-6 animated-gradient`}>
-      {/* Header */}
-      <div className="mb-4">
-        <p className="text-sm text-aura-slate/70 font-medium">{currentTime}</p>
-        <h2 className="text-2xl font-semibold text-foreground">
-          {config.greeting}{userName ? `, ${userName}` : ''}
-        </h2>
+    <>
+      <div className={`${config.gradient} rounded-3xl p-6 animated-gradient`}>
+        {/* Header */}
+        <div className="mb-4">
+          <p className="text-sm text-aura-slate/70 font-medium">{currentTime}</p>
+          <h2 className="text-2xl font-semibold text-foreground">
+            {config.greeting}{userName ? `, ${userName}` : ''}
+          </h2>
+        </div>
+
+        {/* Suggestion */}
+        <p className="text-aura-slate/80 mb-4">{config.suggestion}</p>
+
+        {/* 4 Recommendations */}
+        <div className="space-y-2">
+          <p className="text-xs text-aura-slate/60 uppercase tracking-wide">
+            Твоя программа на сегодня
+          </p>
+          {recommendations.map((rec) => {
+            const Icon = getRecommendationIcon(rec.type);
+            const isCompleted = completedTasks.includes(rec.id);
+
+            return (
+              <button
+                key={rec.id}
+                onClick={() => setSelectedRec(rec)}
+                className={`w-full glass rounded-xl p-4 flex items-center gap-3 transition-all active:scale-[0.99] ${
+                  isCompleted ? 'opacity-60' : ''
+                }`}
+              >
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  isCompleted
+                    ? 'bg-aura-mint/30'
+                    : 'bg-gradient-to-br from-aura-mint/20 to-aura-lavender/20'
+                }`}>
+                  {isCompleted ? (
+                    <Check size={20} className="text-aura-mint" />
+                  ) : (
+                    <Icon size={20} className="text-aura-mint" />
+                  )}
+                </div>
+                <div className="flex-1 text-left">
+                  <h3 className={`font-medium text-foreground ${isCompleted ? 'line-through' : ''}`}>
+                    {rec.title}
+                  </h3>
+                  <p className="text-xs text-aura-slate/70">
+                    {rec.subtitle} · {rec.duration} · {getRecommendationLabel(rec.type)}
+                  </p>
+                </div>
+                <ChevronRight size={18} className="text-aura-slate/40" />
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Suggestion */}
-      <p className="text-aura-slate/80 mb-4">{config.suggestion}</p>
+      {/* Modal */}
+      {selectedRec && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setSelectedRec(null)}
+          />
+          <div className="relative w-full max-h-[85vh] bg-white rounded-t-3xl overflow-hidden animate-slide-up">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-aura-slate/10 px-5 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-aura-mint to-aura-lavender flex items-center justify-center">
+                  {(() => {
+                    const Icon = getRecommendationIcon(selectedRec.type);
+                    return <Icon size={20} className="text-white" />;
+                  })()}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">{selectedRec.title}</h3>
+                  <p className="text-xs text-aura-slate/60">{selectedRec.subtitle}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedRec(null)}
+                className="h-8 w-8 rounded-full bg-aura-slate/10 flex items-center justify-center"
+              >
+                <X size={18} className="text-aura-slate" />
+              </button>
+            </div>
 
-      {/* 3 Recommendations */}
-      <div className="space-y-2">
-        <p className="text-xs text-aura-slate/60 uppercase tracking-wide">
-          Рекомендуем для тебя
-        </p>
-        {recommendations.map((rec, index) => (
-          <button
-            key={index}
-            onClick={onStartPractice}
-            className="w-full glass rounded-xl p-3 flex items-center justify-between transition-transform active:scale-[0.99]"
-          >
-            <div className="text-left">
-              <h3 className="font-medium text-foreground text-sm">{rec.title}</h3>
-              <p className="text-xs text-aura-slate/70">{rec.duration}</p>
+            {/* Modal Content */}
+            <div className="px-5 py-6 overflow-auto max-h-[calc(85vh-140px)]">
+              {/* Description */}
+              <p className="text-aura-slate/80 leading-relaxed mb-6">
+                {selectedRec.content.description}
+              </p>
+
+              {/* Sections */}
+              {selectedRec.content.sections.map((section, idx) => (
+                <div key={idx} className="mb-6">
+                  <h4 className="font-semibold text-foreground mb-3">{section.title}</h4>
+                  <div className="space-y-3">
+                    {section.items.map((item, i) => (
+                      <div key={i} className="flex gap-3">
+                        <div className="h-2 w-2 rounded-full bg-aura-mint mt-2 flex-shrink-0" />
+                        <p className="text-sm text-aura-slate/80 leading-relaxed">{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {/* Preparation */}
+              {selectedRec.content.preparation && (
+                <div className="mb-6 bg-aura-mint/10 rounded-2xl p-4">
+                  <h4 className="font-semibold text-foreground mb-3">Подготовка</h4>
+                  <div className="space-y-2">
+                    {selectedRec.content.preparation.map((item, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <Check size={16} className="text-aura-mint flex-shrink-0" />
+                        <p className="text-sm text-aura-slate/80">{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Note */}
+              {selectedRec.content.note && (
+                <div className="bg-aura-lavender/10 rounded-2xl p-4 mb-6">
+                  <p className="text-sm text-aura-slate/80 leading-relaxed italic">
+                    {selectedRec.content.note}
+                  </p>
+                </div>
+              )}
             </div>
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-aura-mint to-aura-mint-dark flex items-center justify-center">
-              <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
-                <path d="M6 4L16 10L6 16V4Z" fill="white" />
-              </svg>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-white border-t border-aura-slate/10 px-5 py-4 safe-area-bottom">
+              <button
+                onClick={() => handleComplete(selectedRec.id)}
+                className={`w-full py-4 rounded-2xl font-semibold text-white flex items-center justify-center gap-2 ${
+                  completedTasks.includes(selectedRec.id)
+                    ? 'bg-aura-slate/50'
+                    : 'bg-gradient-to-r from-aura-mint to-aura-mint-dark'
+                }`}
+              >
+                {completedTasks.includes(selectedRec.id) ? (
+                  <>
+                    <Check size={20} />
+                    Выполнено
+                  </>
+                ) : (
+                  selectedRec.content.buttonText
+                )}
+              </button>
             </div>
-          </button>
-        ))}
-      </div>
-    </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
