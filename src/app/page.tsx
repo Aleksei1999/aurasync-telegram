@@ -23,15 +23,12 @@ interface TodayCheckin {
   date: string;
 }
 
+type ProfileType = 'cortisol' | 'neuro' | 'burnout' | 'potential';
+
 interface OnboardingAnswers {
   main_goal?: string;
-  stress_level?: string;
-  sleep_quality?: string;
-  energy_pattern?: string;
-  physical_symptoms?: string[];
-  emotional_challenges?: string[];
-  desired_feeling?: string[];
-  [key: string]: string | string[] | undefined;
+  profile?: ProfileType;
+  [key: string]: string | string[] | ProfileType | undefined;
 }
 
 export default function HomePage() {
@@ -80,10 +77,14 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleOnboardingComplete = (answers: Record<string, string | string[]>) => {
+  const handleOnboardingComplete = (answers: Record<string, string | string[]>, profile?: ProfileType) => {
+    const answersWithProfile = { ...answers, profile };
     localStorage.setItem('aura_onboarding_completed', 'true');
-    localStorage.setItem('aura_onboarding_answers', JSON.stringify(answers));
-    setOnboardingAnswers(answers);
+    localStorage.setItem('aura_onboarding_answers', JSON.stringify(answersWithProfile));
+    if (profile) {
+      localStorage.setItem('aura_user_profile', profile);
+    }
+    setOnboardingAnswers(answersWithProfile);
     setAppState('checkin');
   };
 

@@ -1,311 +1,307 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { ChevronRight, ChevronLeft, Sparkles, Camera, Upload, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronRight, ChevronLeft, Sparkles, Brain, Heart, Target, Zap } from 'lucide-react';
 import { useTelegram } from './TelegramProvider';
+
+// Типы профилей
+type ProfileType = 'cortisol' | 'neuro' | 'burnout' | 'potential';
+
+interface ProfileInfo {
+  name: string;
+  title: string;
+  description: string;
+  strategy: string;
+  priorities: {
+    morning: string;
+    day: string;
+    evening: string;
+  };
+  focusAreas: string[];
+}
+
+const profiles: Record<ProfileType, ProfileInfo> = {
+  cortisol: {
+    name: 'Кортизоловая ловушка',
+    title: 'Профиль: Кортизоловая ловушка',
+    description: 'Ваша симпатическая нервная система перегружена. Организм находится в состоянии «хронической обороны». Это приводит к спазму жевательных мышц и сосудов шеи, из-за чего нарушается отток лимфы. Ваше лицо буквально «хранит» старый стресс в виде отёков.',
+    strategy: 'Снять «мышечный панцирь» и запустить лимфодренаж',
+    priorities: {
+      morning: 'Техники «Слив кортизола» (дыхание)',
+      day: 'Расслабление челюсти и работа с осанкой',
+      evening: 'Альфа-ритмы для глубокого отключения контроля'
+    },
+    focusAreas: ['осанка', 'лимфодренаж', 'расслабление']
+  },
+  neuro: {
+    name: 'Нейро-истощение',
+    title: 'Профиль: Нейро-истощение',
+    description: 'Ваши дофаминовые рецепторы перегружены информационным шумом, а митохондрии (энергетические станции клеток) работают на минимуме. Мозг ввёл режим «энергосбережения», что ощущается как когнитивная вязкость и физическая слабость.',
+    strategy: 'Восстановление нейронной проводимости и «информационный детокс»',
+    priorities: {
+      morning: 'Практика «Код Дофамина» (настройка на естественную радость)',
+      day: 'Жёсткий водный протокол и белковое питание',
+      evening: 'Ночное программирование на регенерацию клеток мозга'
+    },
+    focusAreas: ['фокус', 'энергия', 'детокс']
+  },
+  burnout: {
+    name: 'Замкнутый цикл',
+    title: 'Профиль: Замкнутый цикл (Режим выживания)',
+    description: 'Вы находитесь в состоянии эмоционального выгорания. Ваша амигдала (центр страха) гиперактивна, что блокирует работу префронтальной коры (логика и планирование). Тело экономит ресурсы, блокируя эмоции и драйв.',
+    strategy: 'Возвращение в состояние безопасности и глубокое восстановление сна',
+    priorities: {
+      morning: 'Мягкие практики «Исцеления» без надрыва',
+      day: 'Короткие 3-минутные паузы тишины',
+      evening: 'Техника «Сон Спецслужб» для гарантированного восстановления'
+    },
+    focusAreas: ['сон', 'восстановление', 'спокойствие']
+  },
+  potential: {
+    name: 'Скрытый потенциал',
+    title: 'Профиль: Скрытый потенциал',
+    description: 'Ваша система стабильна, но работает на «базовых настройках». У вас есть избыток энергии, который не находит правильного русла. Ваше тело готово к трансформации, нужно лишь синхронизировать ритмы мозга для выхода на новый уровень.',
+    strategy: 'Квантовое расширение и оттачивание фокуса',
+    priorities: {
+      morning: 'Практики «Манифестации» по Диспензе',
+      day: 'Техники сверх-концентрации и «Flash-резонанс»',
+      evening: 'Тета-медитации на масштаб и финансовые цели'
+    },
+    focusAreas: ['масштаб', 'продуктивность', 'манифестация']
+  }
+};
+
+// Блоки вопросов
+interface QuestionBlock {
+  id: string;
+  title: string;
+  icon: typeof Brain;
+}
+
+const questionBlocks: QuestionBlock[] = [
+  { id: 'body', title: 'Ваше тело и энергия', icon: Zap },
+  { id: 'brain', title: 'Ваш мозг и фокус', icon: Brain },
+  { id: 'mood', title: 'Ваше настроение', icon: Heart },
+  { id: 'goal', title: 'Ваша главная цель', icon: Target },
+];
 
 interface OnboardingQuestion {
   id: string;
+  blockId: string;
   question: string;
-  type: 'single' | 'multiple' | 'scale' | 'date' | 'time' | 'photo';
-  options?: { id: string; label: string; emoji?: string }[];
-  scaleLabels?: { min: string; max: string };
-  placeholder?: string;
-  optional?: boolean;
+  options: { id: string; label: string; scores: Partial<Record<ProfileType, number>> }[];
 }
 
 const questions: OnboardingQuestion[] = [
+  // Блок 1: Тело и энергия
   {
-    id: 'before_photo',
-    question: 'Загрузи своё фото «До»',
-    type: 'photo',
-    placeholder: 'Это фото останется приватным и поможет отслеживать твой прогресс',
-    optional: true,
-  },
-  {
-    id: 'birth_date',
-    question: 'Когда ты родилась?',
-    type: 'date',
-    placeholder: 'Выбери дату рождения',
-  },
-  {
-    id: 'birth_time',
-    question: 'Во сколько ты родилась?',
-    type: 'time',
-    placeholder: 'Если не знаешь точно — примерно',
-  },
-  {
-    id: 'age_group',
-    question: 'К какой возрастной группе ты относишься?',
-    type: 'single',
+    id: 'morning_energy',
+    blockId: 'body',
+    question: 'Как вы чувствуете себя через час после пробуждения?',
     options: [
-      { id: '18-24', label: '18-24' },
-      { id: '25-34', label: '25-34' },
-      { id: '35-44', label: '35-44' },
-      { id: '45+', label: '45+' },
-    ],
+      { id: 'great', label: 'Полна сил и готова к делам', scores: { potential: 2 } },
+      { id: 'coffee', label: 'Вроде нормально, но нужен кофе, чтобы «включиться»', scores: { neuro: 1 } },
+      { id: 'tired', label: 'Всё ещё чувствую усталость, хочу обратно в кровать', scores: { burnout: 2, neuro: 1 } },
+    ]
   },
+  {
+    id: 'face_swelling',
+    blockId: 'body',
+    question: 'Бывают ли у вас отёки на лице по утрам?',
+    options: [
+      { id: 'never', label: 'Нет, лицо всегда выглядит свежим', scores: { potential: 2 } },
+      { id: 'sometimes', label: 'Иногда замечаю, но они быстро проходят', scores: { cortisol: 1 } },
+      { id: 'always', label: 'Да, это происходит почти каждое утро', scores: { cortisol: 2 } },
+    ]
+  },
+  {
+    id: 'head_heaviness',
+    blockId: 'body',
+    question: 'Чувствуете ли вы тяжесть в голове или желание сгорбиться?',
+    options: [
+      { id: 'no', label: 'Нет, держу спину ровно и чувствую лёгкость', scores: { potential: 2 } },
+      { id: 'evening', label: 'Бывает к вечеру, когда сильно устаю', scores: { neuro: 1 } },
+      { id: 'constant', label: 'Да, это постоянное чувство, шея и плечи часто зажаты', scores: { cortisol: 2 } },
+    ]
+  },
+  {
+    id: 'body_tension',
+    blockId: 'body',
+    question: 'Замечаете ли вы зажимы в теле в течение дня?',
+    options: [
+      { id: 'relaxed', label: 'Нет, я чувствую себя расслабленно', scores: { potential: 2 } },
+      { id: 'sometimes', label: 'Иногда сжимаю челюсть или поднимаю плечи к ушам', scores: { cortisol: 1 } },
+      { id: 'always', label: 'Постоянно чувствую себя как «натянутая струна»', scores: { cortisol: 2, burnout: 1 } },
+    ]
+  },
+  // Блок 2: Мозг и фокус
+  {
+    id: 'focus',
+    blockId: 'brain',
+    question: 'Легко ли вам сосредоточиться на одной задаче?',
+    options: [
+      { id: 'easy', label: 'Да, глубоко погружаюсь и не отвлекаюсь', scores: { potential: 2 } },
+      { id: 'need_time', label: 'Нужно время, чтобы настроиться', scores: { neuro: 1 } },
+      { id: 'hard', label: 'Сложно, постоянно тянет проверить телефон или новости', scores: { neuro: 2 } },
+    ]
+  },
+  {
+    id: 'brain_fog',
+    blockId: 'brain',
+    question: 'Бывает ли у вас «туман в голове» или забывчивость?',
+    options: [
+      { id: 'clear', label: 'Нет, голова работает чётко и быстро', scores: { potential: 2 } },
+      { id: 'rarely', label: 'Редко, если только очень много дел сразу', scores: { neuro: 1 } },
+      { id: 'often', label: 'Часто, сложно подбирать слова или быстро соображать', scores: { neuro: 2, burnout: 1 } },
+    ]
+  },
+  {
+    id: 'info_overload',
+    blockId: 'brain',
+    question: 'Как вы справляетесь с потоком информации?',
+    options: [
+      { id: 'easy', label: 'Легко выделяю главное и не устаю', scores: { potential: 2 } },
+      { id: 'tired', label: 'К середине дня начинаю раздражаться от сообщений', scores: { neuro: 1, cortisol: 1 } },
+      { id: 'overload', label: 'Чувствую полный перегруз и хочу «выключить» весь мир', scores: { neuro: 2, burnout: 1 } },
+    ]
+  },
+  // Блок 3: Настроение
+  {
+    id: 'criticism_reaction',
+    blockId: 'mood',
+    question: 'Как вы реагируете на свои ошибки или критику?',
+    options: [
+      { id: 'calm', label: 'Спокойно делаю выводы и иду дальше', scores: { potential: 2 } },
+      { id: 'upset', label: 'Могу вспылить или расстроиться, но быстро отхожу', scores: { cortisol: 1 } },
+      { id: 'ruminate', label: 'Долго «прокручиваю» это в голове и виню себя', scores: { burnout: 2, cortisol: 1 } },
+    ]
+  },
+  {
+    id: 'anxiety',
+    blockId: 'mood',
+    question: 'Бывает ли у вас тревога без видимой причины?',
+    options: [
+      { id: 'never', label: 'Почти никогда', scores: { potential: 2 } },
+      { id: 'sometimes', label: 'Иногда, когда наваливается много задач', scores: { cortisol: 1 } },
+      { id: 'constant', label: 'Это моё привычное состояние, которое мешает жить', scores: { cortisol: 2, burnout: 1 } },
+    ]
+  },
+  {
+    id: 'energy_for_life',
+    blockId: 'mood',
+    question: 'Хватает ли вам сил на что-то, кроме работы и быта?',
+    options: [
+      { id: 'plenty', label: 'Да, полна идей и энергии для роста', scores: { potential: 2 } },
+      { id: 'routine', label: 'Сил хватает только на привычный ритм', scores: { neuro: 1, burnout: 1 } },
+      { id: 'survival', label: 'Живу в режиме «выживания», сил ни на что нет', scores: { burnout: 2 } },
+    ]
+  },
+  // Блок 4: Главная цель
   {
     id: 'main_goal',
-    question: 'Какая твоя главная цель?',
-    type: 'single',
+    blockId: 'goal',
+    question: 'Какой результат через месяц для вас важнее всего?',
     options: [
-      { id: 'stress', label: 'Снизить стресс', emoji: '😮‍💨' },
-      { id: 'sleep', label: 'Улучшить сон', emoji: '😴' },
-      { id: 'energy', label: 'Больше энергии', emoji: '⚡' },
-      { id: 'beauty', label: 'Улучшить внешность', emoji: '✨' },
-      { id: 'focus', label: 'Повысить концентрацию', emoji: '🎯' },
-    ],
-  },
-  {
-    id: 'stress_level',
-    question: 'Как часто ты испытываешь стресс?',
-    type: 'single',
-    options: [
-      { id: 'rarely', label: 'Редко' },
-      { id: 'sometimes', label: 'Иногда' },
-      { id: 'often', label: 'Часто' },
-      { id: 'always', label: 'Постоянно' },
-    ],
-  },
-  {
-    id: 'sleep_quality',
-    question: 'Как ты оцениваешь качество своего сна?',
-    type: 'single',
-    options: [
-      { id: 'great', label: 'Отлично сплю', emoji: '😊' },
-      { id: 'good', label: 'Нормально', emoji: '🙂' },
-      { id: 'poor', label: 'Плохо засыпаю', emoji: '😕' },
-      { id: 'terrible', label: 'Бессонница', emoji: '😫' },
-    ],
-  },
-  {
-    id: 'wake_up_time',
-    question: 'Во сколько ты обычно просыпаешься?',
-    type: 'single',
-    options: [
-      { id: 'early', label: 'До 6:00' },
-      { id: 'morning', label: '6:00 - 8:00' },
-      { id: 'late_morning', label: '8:00 - 10:00' },
-      { id: 'late', label: 'После 10:00' },
-    ],
-  },
-  {
-    id: 'energy_pattern',
-    question: 'Когда у тебя больше всего энергии?',
-    type: 'single',
-    options: [
-      { id: 'morning', label: 'Утром', emoji: '🌅' },
-      { id: 'afternoon', label: 'Днём', emoji: '☀️' },
-      { id: 'evening', label: 'Вечером', emoji: '🌆' },
-      { id: 'varies', label: 'По-разному', emoji: '🔄' },
-    ],
-  },
-  {
-    id: 'work_type',
-    question: 'Какой у тебя тип работы?',
-    type: 'single',
-    options: [
-      { id: 'office', label: 'Офис/удалёнка' },
-      { id: 'active', label: 'Активная работа' },
-      { id: 'creative', label: 'Творческая' },
-      { id: 'caring', label: 'Забота о других' },
-      { id: 'not_working', label: 'Не работаю' },
-    ],
-  },
-  {
-    id: 'physical_symptoms',
-    question: 'Какие физические симптомы тебя беспокоят?',
-    type: 'multiple',
-    options: [
-      { id: 'headaches', label: 'Головные боли' },
-      { id: 'fatigue', label: 'Усталость' },
-      { id: 'skin', label: 'Проблемы с кожей' },
-      { id: 'weight', label: 'Лишний вес' },
-      { id: 'tension', label: 'Напряжение в теле' },
-      { id: 'none', label: 'Ничего из этого' },
-    ],
-  },
-  {
-    id: 'emotional_challenges',
-    question: 'С какими эмоциональными сложностями ты сталкиваешься?',
-    type: 'multiple',
-    options: [
-      { id: 'anxiety', label: 'Тревожность' },
-      { id: 'irritability', label: 'Раздражительность' },
-      { id: 'sadness', label: 'Грусть' },
-      { id: 'overwhelm', label: 'Перегруженность' },
-      { id: 'low_motivation', label: 'Низкая мотивация' },
-      { id: 'none', label: 'Всё хорошо' },
-    ],
-  },
-  {
-    id: 'meditation_experience',
-    question: 'У тебя есть опыт медитации?',
-    type: 'single',
-    options: [
-      { id: 'none', label: 'Никогда не пробовала' },
-      { id: 'beginner', label: 'Пробовала пару раз' },
-      { id: 'intermediate', label: 'Практикую иногда' },
-      { id: 'advanced', label: 'Практикую регулярно' },
-    ],
-  },
-  {
-    id: 'practice_time',
-    question: 'Сколько времени ты готова уделять практикам?',
-    type: 'single',
-    options: [
-      { id: '5min', label: '5 минут' },
-      { id: '10min', label: '10 минут' },
-      { id: '15min', label: '15 минут' },
-      { id: '20min+', label: '20+ минут' },
-    ],
-  },
-  {
-    id: 'preferred_time',
-    question: 'Когда тебе удобнее практиковать?',
-    type: 'single',
-    options: [
-      { id: 'morning', label: 'Утром', emoji: '🌅' },
-      { id: 'lunch', label: 'В обед', emoji: '🌤️' },
-      { id: 'evening', label: 'Вечером', emoji: '🌙' },
-      { id: 'flexible', label: 'Когда получится', emoji: '⏰' },
-    ],
-  },
-  {
-    id: 'motivation',
-    question: 'Что тебя мотивирует больше всего?',
-    type: 'single',
-    options: [
-      { id: 'health', label: 'Здоровье' },
-      { id: 'appearance', label: 'Внешность' },
-      { id: 'productivity', label: 'Продуктивность' },
-      { id: 'relationships', label: 'Отношения' },
-      { id: 'inner_peace', label: 'Внутренний покой' },
-    ],
-  },
-  {
-    id: 'challenges',
-    question: 'Что мешает тебе заботиться о себе?',
-    type: 'multiple',
-    options: [
-      { id: 'no_time', label: 'Нет времени' },
-      { id: 'no_energy', label: 'Нет сил' },
-      { id: 'forget', label: 'Забываю' },
-      { id: 'dont_know_how', label: 'Не знаю как' },
-      { id: 'guilt', label: 'Чувство вины' },
-      { id: 'nothing', label: 'Ничего не мешает' },
-    ],
-  },
-  {
-    id: 'desired_feeling',
-    question: 'Что ты хочешь чувствовать каждый день?',
-    type: 'multiple',
-    options: [
-      { id: 'calm', label: 'Спокойствие', emoji: '🧘' },
-      { id: 'energy', label: 'Энергию', emoji: '⚡' },
-      { id: 'joy', label: 'Радость', emoji: '😊' },
-      { id: 'confidence', label: 'Уверенность', emoji: '💪' },
-      { id: 'clarity', label: 'Ясность ума', emoji: '🎯' },
-      { id: 'beauty', label: 'Красоту', emoji: '✨' },
-    ],
+      { id: 'face', label: 'Свежее лицо: убрать отёки и вернуть чёткие скулы', scores: { cortisol: 1 } },
+      { id: 'clarity', label: 'Ясная голова: работать эффективно и без «тумана»', scores: { neuro: 1 } },
+      { id: 'sleep', label: 'Глубокий сон: быстро засыпать и легко вставать', scores: { burnout: 1 } },
+      { id: 'calm', label: 'Спокойствие: перестать тревожиться и нервничать', scores: { cortisol: 1, burnout: 1 } },
+      { id: 'body', label: 'Лёгкое тело: убрать зажимы, расправить плечи и шею', scores: { cortisol: 1 } },
+    ]
   },
 ];
 
 interface OnboardingProps {
-  onComplete: (answers: Record<string, string | string[]>) => void;
+  onComplete: (answers: Record<string, string | string[]>, profile?: ProfileType) => void;
 }
 
+type ScreenType = 'welcome' | 'questions' | 'analyzing' | 'result';
+
 export function Onboarding({ onComplete }: OnboardingProps) {
+  const [screen, setScreen] = useState<ScreenType>('welcome');
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [calculatedProfile, setCalculatedProfile] = useState<ProfileType | null>(null);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
   const { hapticFeedback } = useTelegram();
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    hapticFeedback('light');
-
-    // Проверяем размер (макс 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      alert('Файл слишком большой. Максимум 10MB');
-      return;
-    }
-
-    // Создаём превью
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      setPhotoPreview(dataUrl);
-      setAnswers(prev => ({ ...prev, [question.id]: dataUrl }));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRemovePhoto = () => {
-    hapticFeedback('light');
-    setPhotoPreview(null);
-    setAnswers(prev => {
-      const newAnswers = { ...prev };
-      delete newAnswers[question.id];
-      return newAnswers;
-    });
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
   const question = questions[currentQuestion];
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
-  const isLastQuestion = currentQuestion === questions.length - 1;
+  const totalQuestions = questions.length;
+  const progress = ((currentQuestion + 1) / totalQuestions) * 100;
+  const isLastQuestion = currentQuestion === totalQuestions - 1;
 
-  const currentAnswer = answers[question.id];
-  const hasAnswer = question.optional
-    ? true
-    : question.type === 'multiple'
-    ? Array.isArray(currentAnswer) && currentAnswer.length > 0
-    : question.type === 'photo'
-    ? !!currentAnswer || question.optional
-    : question.type === 'date' || question.type === 'time'
-    ? !!currentAnswer
-    : !!currentAnswer;
+  // Получаем текущий блок
+  const currentBlock = questionBlocks.find(b => b.id === question?.blockId);
+  const questionsInBlock = questions.filter(q => q.blockId === question?.blockId);
+  const questionIndexInBlock = questionsInBlock.findIndex(q => q.id === question?.id) + 1;
 
-  const handleSingleSelect = (optionId: string) => {
+  // Расчёт профиля
+  const calculateProfile = (): ProfileType => {
+    const scores: Record<ProfileType, number> = {
+      cortisol: 0,
+      neuro: 0,
+      burnout: 0,
+      potential: 0,
+    };
+
+    Object.entries(answers).forEach(([questionId, answerId]) => {
+      const q = questions.find(q => q.id === questionId);
+      if (!q) return;
+      const option = q.options.find(o => o.id === answerId);
+      if (!option) return;
+
+      Object.entries(option.scores).forEach(([profile, score]) => {
+        scores[profile as ProfileType] += score as number;
+      });
+    });
+
+    // Находим профиль с максимальным счётом
+    let maxProfile: ProfileType = 'potential';
+    let maxScore = scores.potential;
+
+    (Object.entries(scores) as [ProfileType, number][]).forEach(([profile, score]) => {
+      if (score > maxScore) {
+        maxScore = score;
+        maxProfile = profile;
+      }
+    });
+
+    return maxProfile;
+  };
+
+  // Анимация анализа
+  useEffect(() => {
+    if (screen === 'analyzing') {
+      const interval = setInterval(() => {
+        setAnalysisProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            const profile = calculateProfile();
+            setCalculatedProfile(profile);
+            setTimeout(() => setScreen('result'), 500);
+            return 100;
+          }
+          return prev + 2;
+        });
+      }, 50);
+      return () => clearInterval(interval);
+    }
+  }, [screen]);
+
+  const handleStartAudit = () => {
+    hapticFeedback('light');
+    setScreen('questions');
+  };
+
+  const handleSelectOption = (optionId: string) => {
     hapticFeedback('light');
     setAnswers(prev => ({ ...prev, [question.id]: optionId }));
-  };
-
-  const handleDateTimeChange = (value: string) => {
-    setAnswers(prev => ({ ...prev, [question.id]: value }));
-  };
-
-  const handleMultipleSelect = (optionId: string) => {
-    hapticFeedback('light');
-    setAnswers(prev => {
-      const current = (prev[question.id] as string[]) || [];
-
-      // Если выбрали "ничего" или "всё хорошо", сбрасываем остальные
-      if (optionId === 'none' || optionId === 'nothing') {
-        return { ...prev, [question.id]: [optionId] };
-      }
-
-      // Если уже выбрано "ничего", убираем его
-      const filtered = current.filter(id => id !== 'none' && id !== 'nothing');
-
-      if (filtered.includes(optionId)) {
-        return { ...prev, [question.id]: filtered.filter(id => id !== optionId) };
-      }
-      return { ...prev, [question.id]: [...filtered, optionId] };
-    });
   };
 
   const handleNext = () => {
     hapticFeedback('light');
     if (isLastQuestion) {
-      onComplete(answers);
+      setScreen('analyzing');
     } else {
       setCurrentQuestion(prev => prev + 1);
     }
@@ -315,37 +311,194 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     hapticFeedback('light');
     if (currentQuestion > 0) {
       setCurrentQuestion(prev => prev - 1);
+    } else {
+      setScreen('welcome');
     }
   };
 
-  const isSelected = (optionId: string) => {
-    if (question.type === 'multiple') {
-      return Array.isArray(currentAnswer) && currentAnswer.includes(optionId);
-    }
-    return currentAnswer === optionId;
+  const handleComplete = () => {
+    hapticFeedback('medium');
+    onComplete(answers, calculatedProfile || undefined);
   };
 
+  const currentAnswer = answers[question?.id];
+  const hasAnswer = !!currentAnswer;
+
+  // Экран приветствия
+  if (screen === 'welcome') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-aura-cream to-white flex flex-col">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+          <div className="h-24 w-24 rounded-full bg-gradient-to-br from-aura-mint to-aura-lavender flex items-center justify-center mb-8">
+            <Sparkles size={48} className="text-white" />
+          </div>
+
+          <h1 className="text-2xl font-bold text-foreground text-center mb-4">
+            Давайте настроим вашу систему
+          </h1>
+
+          <p className="text-aura-slate/70 text-center leading-relaxed mb-8 max-w-sm">
+            Мы проведём краткий аудит вашего состояния, чтобы программа работала на ваш результат. Пожалуйста, отвечайте искренне.
+          </p>
+
+          <div className="flex items-center gap-3 text-sm text-aura-slate/60 mb-8">
+            <div className="flex items-center gap-1">
+              <div className="h-2 w-2 rounded-full bg-aura-mint"></div>
+              <span>11 вопросов</span>
+            </div>
+            <div className="h-1 w-1 rounded-full bg-aura-slate/30"></div>
+            <span>~2 минуты</span>
+          </div>
+        </div>
+
+        <div className="px-5 pb-8 safe-area-bottom">
+          <button
+            onClick={handleStartAudit}
+            className="w-full btn-primary flex items-center justify-center gap-2"
+          >
+            Начать аудит
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Экран анализа
+  if (screen === 'analyzing') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-aura-cream to-white flex flex-col items-center justify-center px-6">
+        <div className="relative mb-8">
+          <div className="h-32 w-32 rounded-full border-4 border-aura-slate/10 flex items-center justify-center">
+            <div
+              className="absolute inset-0 rounded-full border-4 border-aura-mint transition-all duration-300"
+              style={{
+                clipPath: `polygon(50% 50%, 50% 0%, ${50 + 50 * Math.sin(analysisProgress * 3.6 * Math.PI / 180)}% ${50 - 50 * Math.cos(analysisProgress * 3.6 * Math.PI / 180)}%, 50% 50%)`,
+                transform: 'rotate(-90deg)'
+              }}
+            />
+            <Brain size={48} className="text-aura-mint animate-pulse" />
+          </div>
+        </div>
+
+        <h2 className="text-xl font-bold text-foreground mb-2">Анализируем ваши ответы</h2>
+        <p className="text-aura-slate/60 mb-6">Подбираем персональную программу...</p>
+
+        <div className="w-48 h-2 bg-aura-slate/10 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-aura-mint to-aura-lavender transition-all duration-100"
+            style={{ width: `${analysisProgress}%` }}
+          />
+        </div>
+        <span className="text-sm text-aura-slate/50 mt-2">{analysisProgress}%</span>
+      </div>
+    );
+  }
+
+  // Экран результата
+  if (screen === 'result' && calculatedProfile) {
+    const profile = profiles[calculatedProfile];
+    const BlockIcon = questionBlocks.find(b => b.id === 'goal')?.icon || Target;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-aura-cream to-white flex flex-col">
+        <header className="px-5 pt-4 pb-2 safe-area-top">
+          <div className="flex items-center justify-center gap-2">
+            <Sparkles size={20} className="text-aura-mint" />
+            <span className="font-semibold text-foreground">AuraSync</span>
+          </div>
+        </header>
+
+        <main className="flex-1 px-5 py-6 overflow-auto">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-aura-mint/20 text-aura-mint mb-4">
+              <BlockIcon size={18} />
+              <span className="text-sm font-medium">Анализ завершён</span>
+            </div>
+            <h1 className="text-xl font-bold text-foreground">{profile.title}</h1>
+          </div>
+
+          <div className="bg-white rounded-3xl p-5 shadow-sm mb-4">
+            <h3 className="font-semibold text-foreground mb-3">Анализ состояния</h3>
+            <p className="text-aura-slate/70 text-sm leading-relaxed">{profile.description}</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-aura-mint/10 to-aura-lavender/10 rounded-3xl p-5 mb-4">
+            <h3 className="font-semibold text-foreground mb-3">Главная цель на месяц</h3>
+            <p className="text-foreground">{profile.strategy}</p>
+          </div>
+
+          <div className="bg-white rounded-3xl p-5 shadow-sm mb-4">
+            <h3 className="font-semibold text-foreground mb-4">Приоритет в программе</h3>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm">🌅</span>
+                </div>
+                <div>
+                  <div className="text-xs text-aura-slate/50 mb-0.5">Утро</div>
+                  <div className="text-sm text-foreground">{profile.priorities.morning}</div>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm">☀️</span>
+                </div>
+                <div>
+                  <div className="text-xs text-aura-slate/50 mb-0.5">День</div>
+                  <div className="text-sm text-foreground">{profile.priorities.day}</div>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm">🌙</span>
+                </div>
+                <div>
+                  <div className="text-xs text-aura-slate/50 mb-0.5">Вечер</div>
+                  <div className="text-sm text-foreground">{profile.priorities.evening}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-aura-slate/5 rounded-2xl p-4 text-center">
+            <p className="text-sm text-aura-slate/70">
+              На основе вашего профиля <span className="font-medium text-foreground">«{profile.name}»</span>, мы скорректировали программу на первый месяц. Мы добавили больше техник для <span className="text-aura-mint font-medium">{profile.focusAreas.join(', ')}</span>.
+            </p>
+          </div>
+        </main>
+
+        <div className="px-5 pb-8 safe-area-bottom">
+          <button
+            onClick={handleComplete}
+            className="w-full btn-primary flex items-center justify-center gap-2"
+          >
+            Начать программу
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Экран вопросов
   return (
     <div className="min-h-screen bg-gradient-to-b from-aura-cream to-white flex flex-col">
       {/* Header */}
       <header className="px-5 pt-4 pb-2 safe-area-top">
         <div className="flex items-center justify-between mb-4">
-          {currentQuestion > 0 ? (
-            <button
-              onClick={handleBack}
-              className="h-10 w-10 rounded-xl bg-white/50 flex items-center justify-center"
-            >
-              <ChevronLeft size={20} className="text-aura-slate" />
-            </button>
-          ) : (
-            <div className="w-10" />
-          )}
+          <button
+            onClick={handleBack}
+            className="h-10 w-10 rounded-xl bg-white/50 flex items-center justify-center"
+          >
+            <ChevronLeft size={20} className="text-aura-slate" />
+          </button>
           <div className="flex items-center gap-2">
             <Sparkles size={20} className="text-aura-mint" />
             <span className="font-semibold text-foreground">AuraSync</span>
           </div>
           <div className="w-10 text-right text-sm text-aura-slate/60">
-            {currentQuestion + 1}/{questions.length}
+            {currentQuestion + 1}/{totalQuestions}
           </div>
         </div>
 
@@ -358,152 +511,35 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         </div>
       </header>
 
+      {/* Block indicator */}
+      {currentBlock && (
+        <div className="px-5 pt-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-aura-slate/5">
+            <currentBlock.icon size={14} className="text-aura-mint" />
+            <span className="text-xs text-aura-slate/70">{currentBlock.title} • {questionIndexInBlock}/{questionsInBlock.length}</span>
+          </div>
+        </div>
+      )}
+
       {/* Question */}
       <main className="flex-1 px-5 py-6 flex flex-col">
-        <h1 className="text-xl font-bold text-foreground mb-2">
+        <h1 className="text-xl font-bold text-foreground mb-6">
           {question.question}
         </h1>
-        {question.type === 'multiple' && (
-          <p className="text-sm text-aura-slate/60 mb-4">
-            Можно выбрать несколько вариантов
-          </p>
-        )}
 
         {/* Options */}
-        <div className="flex-1 space-y-3 mt-4">
-          {question.type === 'photo' && (
-            <div className="space-y-4">
-              <p className="text-sm text-aura-slate/60">{question.placeholder}</p>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handlePhotoUpload}
-                className="hidden"
-              />
-
-              {photoPreview || currentAnswer ? (
-                <div className="relative">
-                  <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-aura-slate/10">
-                    <img
-                      src={photoPreview || (currentAnswer as string)}
-                      alt="Фото до"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <button
-                    onClick={handleRemovePhoto}
-                    className="absolute top-3 right-3 h-10 w-10 rounded-full bg-black/50 flex items-center justify-center"
-                  >
-                    <X size={20} className="text-white" />
-                  </button>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-3 right-3 px-4 py-2 rounded-xl bg-white/90 text-foreground text-sm font-medium flex items-center gap-2"
-                  >
-                    <Camera size={16} />
-                    Изменить
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full aspect-[3/4] rounded-3xl border-2 border-dashed border-aura-slate/20 bg-white flex flex-col items-center justify-center gap-4 transition-colors hover:border-aura-mint hover:bg-aura-mint/5"
-                  >
-                    <div className="h-20 w-20 rounded-full bg-gradient-to-br from-aura-mint to-aura-lavender flex items-center justify-center">
-                      <Camera size={32} className="text-white" />
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium text-foreground mb-1">Загрузить фото</div>
-                      <div className="text-sm text-aura-slate/60">или сделать селфи</div>
-                    </div>
-                  </button>
-                </div>
-              )}
-
-              {question.optional && (
-                <p className="text-center text-sm text-aura-slate/50">
-                  Этот шаг можно пропустить
-                </p>
-              )}
-            </div>
-          )}
-
-          {question.type === 'date' && (
-            <div className="space-y-4">
-              <p className="text-sm text-aura-slate/60">{question.placeholder}</p>
-              <input
-                type="date"
-                value={(currentAnswer as string) || ''}
-                onChange={(e) => handleDateTimeChange(e.target.value)}
-                className="w-full p-4 rounded-2xl bg-white text-foreground shadow-sm border-0 text-lg focus:outline-none focus:ring-2 focus:ring-aura-mint"
-                max={new Date().toISOString().split('T')[0]}
-              />
-            </div>
-          )}
-
-          {question.type === 'time' && (
-            <div className="space-y-4">
-              <p className="text-sm text-aura-slate/60">{question.placeholder}</p>
-              <input
-                type="time"
-                value={(currentAnswer as string) || ''}
-                onChange={(e) => handleDateTimeChange(e.target.value)}
-                className="w-full p-4 rounded-2xl bg-white text-foreground shadow-sm border-0 text-lg focus:outline-none focus:ring-2 focus:ring-aura-mint"
-              />
-              <button
-                onClick={() => handleDateTimeChange('unknown')}
-                className={`w-full p-4 rounded-2xl text-left font-medium transition-all ${
-                  currentAnswer === 'unknown'
-                    ? 'bg-aura-mint text-foreground shadow-md'
-                    : 'bg-white text-aura-slate/80 shadow-sm'
-                }`}
-              >
-                Не знаю точное время
-              </button>
-            </div>
-          )}
-
-          {(question.type === 'single' || question.type === 'multiple') && question.options?.map((option) => (
+        <div className="flex-1 space-y-3">
+          {question.options.map((option) => (
             <button
               key={option.id}
-              onClick={() =>
-                question.type === 'multiple'
-                  ? handleMultipleSelect(option.id)
-                  : handleSingleSelect(option.id)
-              }
-              className={`w-full p-4 rounded-2xl text-left font-medium transition-all flex items-center gap-3 ${
-                isSelected(option.id)
+              onClick={() => handleSelectOption(option.id)}
+              className={`w-full p-4 rounded-2xl text-left transition-all ${
+                currentAnswer === option.id
                   ? 'bg-aura-mint text-foreground shadow-md scale-[1.02]'
                   : 'bg-white text-aura-slate/80 shadow-sm'
               }`}
             >
-              {option.emoji && <span className="text-xl">{option.emoji}</span>}
-              <span className="flex-1">{option.label}</span>
-              {question.type === 'multiple' && (
-                <div
-                  className={`h-5 w-5 rounded-md border-2 flex items-center justify-center transition-colors ${
-                    isSelected(option.id)
-                      ? 'bg-white border-white'
-                      : 'border-aura-slate/20'
-                  }`}
-                >
-                  {isSelected(option.id) && (
-                    <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                      <path
-                        d="M1 5L4.5 8.5L11 1"
-                        stroke="#8BCFC0"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </div>
-              )}
+              <span className="text-sm leading-relaxed">{option.label}</span>
             </button>
           ))}
         </div>
@@ -518,7 +554,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             !hasAnswer ? 'opacity-50' : ''
           }`}
         >
-          {isLastQuestion ? 'Начать' : question.optional && !currentAnswer ? 'Пропустить' : 'Далее'}
+          {isLastQuestion ? 'Завершить' : 'Далее'}
           <ChevronRight size={20} />
         </button>
       </div>
