@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Sun, Moon, Sunrise, CloudSun, Headphones, Droplets, BookOpen, ChevronRight, X, Check, Play } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Sun, Moon, Sunrise, CloudSun, Headphones, Droplets, BookOpen, ChevronRight, X, Check, Play, Pause } from 'lucide-react';
 
 type TimeOfDay = 'morning' | 'day' | 'evening' | 'night';
 type RecommendationType = 'listen' | 'read' | 'checklist';
@@ -13,6 +13,7 @@ interface Recommendation {
   duration: string;
   type: RecommendationType;
   hasVideo?: boolean;
+  audioSrc?: string;
   content: {
     description: string;
     sections: {
@@ -66,6 +67,7 @@ const recommendations: Recommendation[] = [
     subtitle: 'Утренняя прошивка',
     duration: '7 мин',
     type: 'listen',
+    audioSrc: '/audio/dopamine-code.wav',
     content: {
       description: '7 минут, чтобы перехватить управление своей биохимией и выйти из режима «выживания».',
       sections: [
@@ -153,6 +155,7 @@ const recommendations: Recommendation[] = [
     subtitle: 'Ночной ремонт',
     duration: '5 мин',
     type: 'listen',
+    audioSrc: '/audio/alpha-immersion.wav',
     content: {
       description: '5 минут, чтобы переключить мозг с частоты дневного хаоса на волну глубокой регенерации.',
       sections: [
@@ -219,6 +222,11 @@ export function BioClock({ userName }: BioClockProps) {
   const [currentTime, setCurrentTime] = useState('');
   const [selectedRec, setSelectedRec] = useState<Recommendation | null>(null);
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioProgress, setAudioProgress] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -255,7 +263,77 @@ export function BioClock({ userName }: BioClockProps) {
       date: new Date().toDateString(),
       tasks: newTasks
     }));
+
+    // Stop audio if playing
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsPlaying(false);
+    setAudioProgress(0);
     setSelectedRec(null);
+  };
+
+  const handleCloseModal = () => {
+    // Stop audio when closing modal
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsPlaying(false);
+    setAudioProgress(0);
+    setAudioCurrentTime(0);
+    setSelectedRec(null);
+  };
+
+  const togglePlayPause = () => {
+    if (!selectedRec?.audioSrc) return;
+
+    if (!audioRef.current) {
+      audioRef.current = new Audio(selectedRec.audioSrc);
+      audioRef.current.addEventListener('timeupdate', () => {
+        if (audioRef.current) {
+          const progress = (audioRef.current.currentTime / audioRef.current.duration) * 100;
+          setAudioProgress(progress);
+          setAudioCurrentTime(audioRef.current.currentTime);
+        }
+      });
+      audioRef.current.addEventListener('loadedmetadata', () => {
+        if (audioRef.current) {
+          setAudioDuration(audioRef.current.duration);
+        }
+      });
+      audioRef.current.addEventListener('ended', () => {
+        setIsPlaying(false);
+        setAudioProgress(0);
+        setAudioCurrentTime(0);
+        // Mark as completed when audio ends
+        if (selectedRec) {
+          handleComplete(selectedRec.id);
+        }
+      });
+    }
+
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current || !audioDuration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = x / rect.width;
+    audioRef.current.currentTime = percentage * audioDuration;
   };
 
   const config = timeConfigs[timeOfDay];
@@ -322,7 +400,7 @@ export function BioClock({ userName }: BioClockProps) {
         <div className="fixed inset-0 z-50 flex items-end justify-center">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setSelectedRec(null)}
+            onClick={handleCloseModal}
           />
           <div className="relative w-full max-h-[85vh] bg-white rounded-t-3xl overflow-hidden animate-slide-up">
             {/* Modal Header */}
@@ -340,7 +418,7 @@ export function BioClock({ userName }: BioClockProps) {
                 </div>
               </div>
               <button
-                onClick={() => setSelectedRec(null)}
+                onClick={handleCloseModal}
                 className="h-8 w-8 rounded-full bg-aura-slate/10 flex items-center justify-center"
               >
                 <X size={18} className="text-aura-slate" />
@@ -368,6 +446,44 @@ export function BioClock({ userName }: BioClockProps) {
                   </div>
                 </div>
               ))}
+
+              {/* Audio Player */}
+              {selectedRec.audioSrc && (
+                <div className="mb-6 bg-gradient-to-br from-aura-mint/10 to-aura-lavender/10 rounded-2xl p-4">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={togglePlayPause}
+                      className="h-14 w-14 rounded-full bg-gradient-to-br from-aura-mint to-aura-mint-dark flex items-center justify-center flex-shrink-0 shadow-lg"
+                    >
+                      {isPlaying ? (
+                        <Pause size={24} className="text-white" />
+                      ) : (
+                        <Play size={24} className="text-white ml-1" />
+                      )}
+                    </button>
+                    <div className="flex-1">
+                      <div
+                        className="h-2 bg-aura-slate/20 rounded-full overflow-hidden cursor-pointer"
+                        onClick={handleSeek}
+                      >
+                        <div
+                          className="h-full bg-gradient-to-r from-aura-mint to-aura-lavender transition-all duration-100"
+                          style={{ width: `${audioProgress}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between mt-2 text-xs text-aura-slate/60">
+                        <span>{formatTime(audioCurrentTime)}</span>
+                        <span>{audioDuration ? formatTime(audioDuration) : selectedRec.duration}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {isPlaying && (
+                    <p className="text-center text-xs text-aura-mint mt-3 animate-pulse">
+                      Воспроизведение...
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Preparation */}
               {selectedRec.content.preparation && (
