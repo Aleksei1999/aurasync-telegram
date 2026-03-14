@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, BookOpen, Map, ShoppingBag, User } from 'lucide-react';
+import { Home, BookOpen, Map, User } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTelegram } from './TelegramProvider';
 
@@ -14,7 +14,6 @@ const navItems: NavItem[] = [
   { icon: Home, label: 'Главная', path: '/' },
   { icon: BookOpen, label: 'Практики', path: '/library' },
   { icon: Map, label: 'Развитие', path: '/map' },
-  { icon: ShoppingBag, label: 'Магазин', path: '/shop' },
   { icon: User, label: 'Профиль', path: '/profile' },
 ];
 
