@@ -10,8 +10,6 @@ import { Navigation } from '@/components/Navigation';
 import { BioClock } from '@/components/BioClock';
 import { DailyCheckin } from '@/components/DailyCheckin';
 import { Calendar } from '@/components/Calendar';
-import { DestinyMatrix } from '@/components/DestinyMatrix';
-import { DailyProgram } from '@/components/DailyProgram';
 import { User } from 'lucide-react';
 
 type AppState = 'splash' | 'onboarding' | 'checkin' | 'main';
@@ -36,7 +34,7 @@ export default function HomePage() {
   const { user } = useTelegram();
   const { profile } = useAuth();
   const [appState, setAppState] = useState<AppState>('splash');
-  const [onboardingAnswers, setOnboardingAnswers] = useState<OnboardingAnswers>({});
+  const [, setOnboardingAnswers] = useState<OnboardingAnswers>({});
   const [todayCheckin, setTodayCheckin] = useState<TodayCheckin | null>(null);
 
   useEffect(() => {
@@ -48,6 +46,9 @@ export default function HomePage() {
         setOnboardingAnswers(JSON.parse(savedOnboarding));
       }
 
+      const currentHour = new Date().getHours();
+      const isMorning = currentHour < 12; // Чекин только до 12:00
+
       if (savedCheckin) {
         const checkin = JSON.parse(savedCheckin);
         const today = new Date().toDateString();
@@ -57,9 +58,10 @@ export default function HomePage() {
           setTodayCheckin(checkin);
           setAppState('main');
         } else {
-          // Чекин устарел, показываем новый
+          // Чекин устарел
           if (savedOnboarding) {
-            setAppState('checkin');
+            // Показываем чекин только утром (до 12:00)
+            setAppState(isMorning ? 'checkin' : 'main');
           } else {
             setAppState('onboarding');
           }
@@ -67,7 +69,8 @@ export default function HomePage() {
       } else {
         // Нет чекина
         if (savedOnboarding) {
-          setAppState('checkin');
+          // Показываем чекин только утром (до 12:00)
+          setAppState(isMorning ? 'checkin' : 'main');
         } else {
           setAppState('onboarding');
         }
@@ -159,12 +162,6 @@ export default function HomePage() {
           userName={userName}
           onStartPractice={handleStartPractice}
         />
-
-        {/* Destiny Matrix */}
-        <DestinyMatrix birthDate={onboardingAnswers.birth_date as string} />
-
-        {/* Daily Program - Free 30-day program */}
-        <DailyProgram />
       </main>
 
       {/* Navigation */}
