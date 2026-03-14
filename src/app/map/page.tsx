@@ -15,8 +15,56 @@ import {
   Zap,
   Target,
   Sparkles,
-  Check
+  Check,
+  AlertCircle
 } from 'lucide-react';
+
+// Типы профилей из онбординга
+type ProfileType = 'cortisol' | 'neuro' | 'burnout' | 'potential';
+
+interface ProfileAnalysis {
+  title: string;
+  analysis: string;
+  recommendation: string;
+  icon: typeof Brain;
+  color: string;
+  bgColor: string;
+}
+
+const profileAnalyses: Record<ProfileType, ProfileAnalysis> = {
+  cortisol: {
+    title: 'Кортизоловая ловушка',
+    analysis: 'Ваша симпатическая нервная система перегружена. Организм находится в состоянии «хронической обороны». Это приводит к спазму жевательных мышц и сосудов шеи, из-за чего нарушается отток лимфы. Ваше лицо буквально «хранит» старый стресс в виде отёков.',
+    recommendation: 'Фокус на курсах: Анти-Тревога, Скульптор лица',
+    icon: Shield,
+    color: 'text-aura-mint-dark',
+    bgColor: 'bg-aura-mint/20',
+  },
+  neuro: {
+    title: 'Нейро-истощение',
+    analysis: 'Ваши дофаминовые рецепторы перегружены информационным шумом, а митохондрии (энергетические станции клеток) работают на минимуме. Мозг ввёл режим «энергосбережения», что ощущается как когнитивная вязкость и физическая слабость.',
+    recommendation: 'Фокус на курсах: Глубокий Фокус, Энергия изнутри',
+    icon: Brain,
+    color: 'text-aura-lavender-dark',
+    bgColor: 'bg-aura-lavender/20',
+  },
+  burnout: {
+    title: 'Замкнутый цикл',
+    analysis: 'Вы находитесь в состоянии эмоционального выгорания. Ваша амигдала (центр страха) гиперактивна, что блокирует работу префронтальной коры (логика и планирование). Тело экономит ресурсы, блокируя эмоции и драйв.',
+    recommendation: 'Фокус на курсах: Интеллект сна, Анти-Тревога',
+    icon: Moon,
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-100',
+  },
+  potential: {
+    title: 'Скрытый потенциал',
+    analysis: 'Ваша система стабильна, но работает на «базовых настройках». У вас есть избыток энергии, который не находит правильного русла. Ваше тело готово к трансформации, нужно лишь синхронизировать ритмы мозга для выхода на новый уровень.',
+    recommendation: 'Фокус на курсах: Глубокий Фокус, Метаболический поток',
+    icon: Sparkles,
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-100',
+  },
+};
 
 // Типы для Aura-Map
 interface AuraAxis {
@@ -386,6 +434,8 @@ export default function MapPage() {
   const [selectedAxis, setSelectedAxis] = useState<AuraAxis | null>(null);
   const [streak, setStreak] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
+  const [userProfile, setUserProfile] = useState<ProfileType | null>(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   useEffect(() => {
     const calculatedAxes = calculateAuraScores();
@@ -394,6 +444,12 @@ export default function MapPage() {
 
     const streakData = JSON.parse(localStorage.getItem('aura_streak') || '{"streak": 0}');
     setStreak(streakData.streak || 0);
+
+    // Получаем профиль пользователя из онбординга
+    const savedProfile = localStorage.getItem('aura_user_profile') as ProfileType | null;
+    if (savedProfile && profileAnalyses[savedProfile]) {
+      setUserProfile(savedProfile);
+    }
 
     // Общий балл — среднее всех осей
     const avg = Math.round(calculatedAxes.reduce((sum, a) => sum + a.value, 0) / calculatedAxes.length);
@@ -427,6 +483,49 @@ export default function MapPage() {
       </header>
 
       <main className="px-5 py-4 space-y-6">
+        {/* Персональный анализ на основе профиля */}
+        {userProfile && (
+          <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
+            <button
+              onClick={() => setShowAnalysis(!showAnalysis)}
+              className="w-full p-5 flex items-center gap-4"
+            >
+              <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${profileAnalyses[userProfile].bgColor}`}>
+                {(() => {
+                  const ProfileIcon = profileAnalyses[userProfile].icon;
+                  return <ProfileIcon size={24} className={profileAnalyses[userProfile].color} />;
+                })()}
+              </div>
+              <div className="flex-1 text-left">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertCircle size={14} className="text-aura-slate/50" />
+                  <span className="text-xs text-aura-slate/60">Анализ состояния</span>
+                </div>
+                <h3 className="font-semibold text-foreground">{profileAnalyses[userProfile].title}</h3>
+              </div>
+              <ChevronRight
+                size={20}
+                className={`text-aura-slate/30 transition-transform ${showAnalysis ? 'rotate-90' : ''}`}
+              />
+            </button>
+
+            {showAnalysis && (
+              <div className="px-5 pb-5 space-y-4 animate-fade-in">
+                <div className="bg-aura-slate/5 rounded-2xl p-4">
+                  <p className="text-sm text-foreground/80 leading-relaxed">
+                    {profileAnalyses[userProfile].analysis}
+                  </p>
+                </div>
+                <div className={`rounded-2xl p-4 ${profileAnalyses[userProfile].bgColor}`}>
+                  <p className={`text-sm font-medium ${profileAnalyses[userProfile].color}`}>
+                    {profileAnalyses[userProfile].recommendation}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Radar Chart */}
         <div className="bg-white rounded-3xl p-6 shadow-sm">
           <div className="text-center mb-2">

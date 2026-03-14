@@ -191,6 +191,10 @@ html {
   animation: fade-in 0.4s ease-out;
 }
 
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
 /* Slide up animation */
 @keyframes slide-up {
   from {
