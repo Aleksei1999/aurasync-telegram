@@ -1,7 +1,60 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Sun, Moon, Sunrise, CloudSun, Headphones, Droplets, BookOpen, ChevronRight, X, Check, Play, Pause, Sparkles, Flame } from 'lucide-react';
+import { Sun, Moon, Sunrise, CloudSun, Headphones, Droplets, BookOpen, ChevronRight, X, Check, Play, Pause, Sparkles, Flame, HelpCircle } from 'lucide-react';
+
+// Тултипы для разных элементов
+interface Tooltip {
+  id: string;
+  title: string;
+  description: string;
+  position: 'top' | 'bottom' | 'center';
+}
+
+const tooltips: Record<string, Tooltip> = {
+  first_visit: {
+    id: 'first_visit',
+    title: 'Добро пожаловать!',
+    description: 'Нажмите на любую практику, чтобы узнать подробности и начать трансформацию',
+    position: 'bottom',
+  },
+  streak: {
+    id: 'streak',
+    title: 'Серия дней',
+    description: 'Количество дней подряд, когда вы заходите в приложение. После 7 дней начинается нейропластичность!',
+    position: 'bottom',
+  },
+  checklist: {
+    id: 'checklist',
+    title: 'Быстрые отметки',
+    description: 'Нажмите на квадрат, чтобы отметить выполнение задания. Не нужно открывать практику — просто тап!',
+    position: 'top',
+  },
+  dopamine_code: {
+    id: 'dopamine_code',
+    title: 'Зачем это нужно?',
+    description: 'Утренняя перезагрузка нервной системы. Снижает кортизол на 23% за 7 минут.',
+    position: 'center',
+  },
+  water_passport: {
+    id: 'water_passport',
+    title: 'Зачем это нужно?',
+    description: 'Вода — растворитель стресса. Выводит токсины и убирает отёки с лица.',
+    position: 'center',
+  },
+  jaw_relaxation: {
+    id: 'jaw_relaxation',
+    title: 'Зачем это нужно?',
+    description: 'Расслабление челюсти обрывает сигнал стресса в мозг. Мгновенный лифтинг-эффект.',
+    position: 'center',
+  },
+  alpha_immersion: {
+    id: 'alpha_immersion',
+    title: 'Зачем это нужно?',
+    description: 'Альфа-волны готовят мозг к глубокому сну и ночной регенерации.',
+    position: 'center',
+  },
+};
 
 type TimeOfDay = 'morning' | 'day' | 'evening' | 'night';
 type RecommendationType = 'listen' | 'read' | 'checklist';
@@ -248,7 +301,47 @@ export function BioClock({ userName }: BioClockProps) {
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [toast, setToast] = useState<{ title: string; message: string } | null>(null);
   const [streak, setStreak] = useState(0);
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+  const [dismissedTooltips, setDismissedTooltips] = useState<string[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Загрузка скрытых тултипов
+  useEffect(() => {
+    const saved = localStorage.getItem('aura_dismissed_tooltips');
+    if (saved) {
+      setDismissedTooltips(JSON.parse(saved));
+    }
+  }, []);
+
+  // Показываем тултип для новых пользователей
+  useEffect(() => {
+    const isFirstVisit = !localStorage.getItem('aura_tooltips_seen');
+    if (isFirstVisit && !dismissedTooltips.includes('first_visit')) {
+      setTimeout(() => {
+        setActiveTooltip('first_visit');
+      }, 1500);
+    }
+  }, [dismissedTooltips]);
+
+  const dismissTooltip = (tooltipId: string, permanent = false) => {
+    setActiveTooltip(null);
+    if (permanent) {
+      const newDismissed = [...dismissedTooltips, tooltipId];
+      setDismissedTooltips(newDismissed);
+      localStorage.setItem('aura_dismissed_tooltips', JSON.stringify(newDismissed));
+
+      // Отмечаем что тултипы были показаны
+      if (tooltipId === 'first_visit') {
+        localStorage.setItem('aura_tooltips_seen', 'true');
+      }
+    }
+  };
+
+  const showTooltip = (tooltipId: string) => {
+    if (!dismissedTooltips.includes(tooltipId)) {
+      setActiveTooltip(tooltipId);
+    }
+  };
 
   useEffect(() => {
     const updateTime = () => {
@@ -411,9 +504,60 @@ export function BioClock({ userName }: BioClockProps) {
 
   const config = timeConfigs[timeOfDay];
 
+  // Компонент тултипа
+  const TooltipBubble = ({ tooltip, onDismiss }: { tooltip: Tooltip; onDismiss: () => void }) => (
+    <div
+      className={`absolute z-40 max-w-xs animate-fade-in ${
+        tooltip.position === 'top' ? 'bottom-full mb-2' :
+        tooltip.position === 'bottom' ? 'top-full mt-2' :
+        'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
+      }`}
+    >
+      <div className="bg-foreground text-white rounded-2xl p-4 shadow-xl">
+        <div className="flex items-start gap-3">
+          <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+            <HelpCircle size={16} className="text-white" />
+          </div>
+          <div className="flex-1">
+            <h4 className="font-semibold text-sm mb-1">{tooltip.title}</h4>
+            <p className="text-xs text-white/80 leading-relaxed">{tooltip.description}</p>
+          </div>
+        </div>
+        <button
+          onClick={onDismiss}
+          className="mt-3 w-full py-2 bg-white/20 rounded-xl text-xs font-medium text-white hover:bg-white/30 transition-colors"
+        >
+          Понятно
+        </button>
+      </div>
+      {/* Arrow */}
+      {tooltip.position !== 'center' && (
+        <div
+          className={`absolute left-1/2 -translate-x-1/2 w-0 h-0 border-8 border-transparent ${
+            tooltip.position === 'top'
+              ? 'top-full border-t-foreground'
+              : 'bottom-full border-b-foreground'
+          }`}
+        />
+      )}
+    </div>
+  );
+
   return (
     <>
-      <div className={`${config.gradient} rounded-3xl p-6 animated-gradient`}>
+      <div className={`${config.gradient} rounded-3xl p-6 animated-gradient relative`}>
+        {/* First Visit Tooltip Overlay */}
+        {activeTooltip === 'first_visit' && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+            <div className="pointer-events-auto">
+              <TooltipBubble
+                tooltip={tooltips.first_visit}
+                onDismiss={() => dismissTooltip('first_visit', true)}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div>
@@ -422,16 +566,27 @@ export function BioClock({ userName }: BioClockProps) {
               {config.greeting}{userName ? `, ${userName}` : ''}
             </h2>
           </div>
-          {/* Streak Badge */}
+          {/* Streak Badge with Tooltip */}
           {streak > 0 && (
-            <div className="flex items-center gap-1.5 bg-white/70 backdrop-blur-sm rounded-full px-3 py-1.5">
-              <Flame size={16} className={streak >= 7 ? 'text-orange-500' : 'text-aura-mint'} />
-              <span className={`text-sm font-semibold ${streak >= 7 ? 'text-orange-500' : 'text-foreground'}`}>
-                {streak}
-              </span>
-              <span className="text-xs text-aura-slate/60">
-                {streak === 1 ? 'день' : streak < 5 ? 'дня' : 'дней'}
-              </span>
+            <div className="relative">
+              <button
+                onClick={() => showTooltip('streak')}
+                className="flex items-center gap-1.5 bg-white/70 backdrop-blur-sm rounded-full px-3 py-1.5 transition-transform active:scale-95"
+              >
+                <Flame size={16} className={streak >= 7 ? 'text-orange-500' : 'text-aura-mint'} />
+                <span className={`text-sm font-semibold ${streak >= 7 ? 'text-orange-500' : 'text-foreground'}`}>
+                  {streak}
+                </span>
+                <span className="text-xs text-aura-slate/60">
+                  {streak === 1 ? 'день' : streak < 5 ? 'дня' : 'дней'}
+                </span>
+              </button>
+              {activeTooltip === 'streak' && (
+                <TooltipBubble
+                  tooltip={tooltips.streak}
+                  onDismiss={() => dismissTooltip('streak', false)}
+                />
+              )}
             </div>
           )}
         </div>
@@ -447,45 +602,87 @@ export function BioClock({ userName }: BioClockProps) {
           {recommendations.map((rec) => {
             const Icon = getRecommendationIcon(rec.type);
             const isCompleted = completedTasks.includes(rec.id);
+            const tooltip = tooltips[rec.id];
 
             return (
-              <button
-                key={rec.id}
-                onClick={() => setSelectedRec(rec)}
-                className={`w-full glass rounded-xl p-4 flex items-center gap-3 transition-all active:scale-[0.99] ${
-                  isCompleted ? 'opacity-60' : ''
-                }`}
-              >
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  isCompleted
-                    ? 'bg-aura-mint/30'
-                    : 'bg-gradient-to-br from-aura-mint/20 to-aura-lavender/20'
-                }`}>
-                  {isCompleted ? (
-                    <Check size={20} className="text-aura-mint" />
-                  ) : (
-                    <Icon size={20} className="text-aura-mint" />
+              <div key={rec.id} className="relative">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setSelectedRec(rec)}
+                    className={`flex-1 glass rounded-xl p-4 flex items-center gap-3 transition-all active:scale-[0.99] ${
+                      isCompleted ? 'opacity-60' : ''
+                    }`}
+                  >
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      isCompleted
+                        ? 'bg-aura-mint/30'
+                        : 'bg-gradient-to-br from-aura-mint/20 to-aura-lavender/20'
+                    }`}>
+                      {isCompleted ? (
+                        <Check size={20} className="text-aura-mint" />
+                      ) : (
+                        <Icon size={20} className="text-aura-mint" />
+                      )}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h3 className={`font-medium text-foreground ${isCompleted ? 'line-through' : ''}`}>
+                        {rec.title}
+                      </h3>
+                      <p className="text-xs text-aura-slate/70">
+                        {rec.subtitle} · {rec.duration} · {getRecommendationLabel(rec.type)}
+                      </p>
+                    </div>
+                    <ChevronRight size={18} className="text-aura-slate/40" />
+                  </button>
+                  {/* Info button for tooltip */}
+                  {tooltip && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        showTooltip(rec.id);
+                      }}
+                      className="h-8 w-8 rounded-full bg-white/50 flex items-center justify-center flex-shrink-0 transition-transform active:scale-90"
+                    >
+                      <HelpCircle size={16} className="text-aura-slate/50" />
+                    </button>
                   )}
                 </div>
-                <div className="flex-1 text-left">
-                  <h3 className={`font-medium text-foreground ${isCompleted ? 'line-through' : ''}`}>
-                    {rec.title}
-                  </h3>
-                  <p className="text-xs text-aura-slate/70">
-                    {rec.subtitle} · {rec.duration} · {getRecommendationLabel(rec.type)}
-                  </p>
-                </div>
-                <ChevronRight size={18} className="text-aura-slate/40" />
-              </button>
+                {/* Tooltip for recommendation */}
+                {activeTooltip === rec.id && tooltip && (
+                  <div className="absolute right-0 top-full mt-2 z-40">
+                    <TooltipBubble
+                      tooltip={tooltip}
+                      onDismiss={() => dismissTooltip(rec.id, false)}
+                    />
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
 
         {/* Quick Checklist */}
-        <div className="mt-4 pt-4 border-t border-white/20">
-          <p className="text-xs text-aura-slate/60 uppercase tracking-wide mb-3">
-            Быстрый чек-лист
-          </p>
+        <div className="mt-4 pt-4 border-t border-white/20 relative">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs text-aura-slate/60 uppercase tracking-wide">
+              Быстрый чек-лист
+            </p>
+            <button
+              onClick={() => showTooltip('checklist')}
+              className="h-6 w-6 rounded-full bg-white/30 flex items-center justify-center transition-transform active:scale-90"
+            >
+              <HelpCircle size={12} className="text-aura-slate/50" />
+            </button>
+          </div>
+          {/* Checklist Tooltip */}
+          {activeTooltip === 'checklist' && (
+            <div className="absolute right-0 bottom-full mb-2 z-40">
+              <TooltipBubble
+                tooltip={tooltips.checklist}
+                onDismiss={() => dismissTooltip('checklist', false)}
+              />
+            </div>
+          )}
           <div className="flex gap-2">
             {recommendations.map((rec) => {
               const isCompleted = completedTasks.includes(rec.id);
