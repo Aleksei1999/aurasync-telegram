@@ -304,9 +304,9 @@ function calculateAchievements(): Achievement[] {
 
 // Компонент радарной диаграммы
 function AuraRadarChart({ axes }: { axes: AuraAxis[] }) {
-  const size = 280;
+  const size = 220;
   const center = size / 2;
-  const maxRadius = 100;
+  const maxRadius = 80;
   const levels = 5;
 
   // Функция для расчёта координат точки
@@ -331,9 +331,12 @@ function AuraRadarChart({ axes }: { axes: AuraAxis[] }) {
     return `${i === 0 ? 'M' : 'L'} ${point.x} ${point.y}`;
   }).join(' ') + ' Z';
 
+  // Размер контейнера для подписей
+  const containerSize = size + 120;
+
   return (
-    <div className="relative flex items-center justify-center">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+    <div className="relative flex items-center justify-center" style={{ width: containerSize, height: containerSize }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="absolute" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
         {/* Фоновые круги */}
         {[...Array(levels)].map((_, i) => (
           <circle
@@ -399,9 +402,10 @@ function AuraRadarChart({ axes }: { axes: AuraAxis[] }) {
       {/* Подписи осей */}
       {axes.map((axis, i) => {
         const angle = (Math.PI * 2 * i) / axes.length - Math.PI / 2;
-        const labelRadius = maxRadius + 45;
-        const x = center + labelRadius * Math.cos(angle);
-        const y = center + labelRadius * Math.sin(angle);
+        const labelRadius = maxRadius + 50;
+        const containerCenter = containerSize / 2;
+        const x = containerCenter + labelRadius * Math.cos(angle);
+        const y = containerCenter + labelRadius * Math.sin(angle);
         const Icon = axis.icon;
 
         return (
@@ -414,10 +418,10 @@ function AuraRadarChart({ axes }: { axes: AuraAxis[] }) {
               transform: 'translate(-50%, -50%)'
             }}
           >
-            <div className={`h-6 w-6 rounded-lg flex items-center justify-center ${axis.bgClass}`}>
-              <Icon size={12} className={axis.colorClass} />
+            <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${axis.bgClass}`}>
+              <Icon size={14} className={axis.colorClass} />
             </div>
-            <span className="text-[10px] text-aura-slate/70 text-center whitespace-nowrap">
+            <span className="text-[10px] text-aura-slate/70 text-center whitespace-nowrap mt-0.5">
               {axis.shortName}
             </span>
             <span className="text-xs font-semibold text-foreground">{axis.value}%</span>
