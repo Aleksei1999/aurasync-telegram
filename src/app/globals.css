@@ -221,6 +221,22 @@ html {
   }
 }
 
+/* Animate slide down (for toasts) */
+.animate-slide-down {
+  animation: animate-slide-down 0.3s ease-out;
+}
+
+@keyframes animate-slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 /* Progress bar styles */
 .progress-bar {
   height: 8px;

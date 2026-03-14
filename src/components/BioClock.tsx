@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Sun, Moon, Sunrise, CloudSun, Headphones, Droplets, BookOpen, ChevronRight, X, Check, Play, Pause } from 'lucide-react';
+import { Sun, Moon, Sunrise, CloudSun, Headphones, Droplets, BookOpen, ChevronRight, X, Check, Play, Pause, Sparkles } from 'lucide-react';
 
 type TimeOfDay = 'morning' | 'day' | 'evening' | 'night';
 type RecommendationType = 'listen' | 'read' | 'checklist';
@@ -58,6 +58,26 @@ const timeConfigs: Record<TimeOfDay, TimeConfig> = {
     gradient: 'bg-evening',
     suggestion: 'Подготовься к глубокому сну',
   },
+};
+
+// Сообщения при выполнении задач
+const completionMessages: Record<string, { title: string; message: string }> = {
+  dopamine_code: {
+    title: 'Практика завершена!',
+    message: 'Ты запустила процесс перезагрузки нервной системы. Кортизол уже снижается.'
+  },
+  water_passport: {
+    title: 'Отлично!',
+    message: 'Каждый глоток воды — это шаг к ясной голове и свежему лицу.'
+  },
+  jaw_relaxation: {
+    title: 'Челюсть расслаблена!',
+    message: 'Ты только что разорвала нейронную петлю стресса. Лицо уже благодарит тебя.'
+  },
+  alpha_immersion: {
+    title: 'Готова ко сну!',
+    message: 'Альфа-волны активированы. Сегодня ночью твой мозг восстановится на 100%.'
+  }
 };
 
 const recommendations: Recommendation[] = [
@@ -226,6 +246,7 @@ export function BioClock({ userName }: BioClockProps) {
   const [audioProgress, setAudioProgress] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+  const [toast, setToast] = useState<{ title: string; message: string } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -253,8 +274,9 @@ export function BioClock({ userName }: BioClockProps) {
     }
   }, []);
 
-  const handleComplete = (id: string) => {
-    const newTasks = completedTasks.includes(id)
+  const handleComplete = (id: string, showToast = true) => {
+    const wasCompleted = completedTasks.includes(id);
+    const newTasks = wasCompleted
       ? completedTasks.filter(t => t !== id)
       : [...completedTasks, id];
 
@@ -263,6 +285,12 @@ export function BioClock({ userName }: BioClockProps) {
       date: new Date().toDateString(),
       tasks: newTasks
     }));
+
+    // Show toast only when completing (not uncompleting)
+    if (!wasCompleted && showToast && completionMessages[id]) {
+      setToast(completionMessages[id]);
+      setTimeout(() => setToast(null), 3000);
+    }
 
     // Stop audio if playing
     if (audioRef.current) {
@@ -392,6 +420,49 @@ export function BioClock({ userName }: BioClockProps) {
               </button>
             );
           })}
+        </div>
+
+        {/* Quick Checklist */}
+        <div className="mt-4 pt-4 border-t border-white/20">
+          <p className="text-xs text-aura-slate/60 uppercase tracking-wide mb-3">
+            Быстрый чек-лист
+          </p>
+          <div className="flex gap-2">
+            {recommendations.map((rec) => {
+              const isCompleted = completedTasks.includes(rec.id);
+              const Icon = getRecommendationIcon(rec.type);
+
+              return (
+                <button
+                  key={rec.id}
+                  onClick={() => handleComplete(rec.id, true)}
+                  className={`flex-1 aspect-square rounded-xl flex flex-col items-center justify-center gap-1 transition-all ${
+                    isCompleted
+                      ? 'bg-aura-mint/30 scale-95'
+                      : 'bg-white/50 hover:bg-white/70'
+                  }`}
+                >
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                    isCompleted ? 'bg-aura-mint' : 'bg-white/70'
+                  }`}>
+                    {isCompleted ? (
+                      <Check size={16} className="text-white" />
+                    ) : (
+                      <Icon size={16} className="text-aura-slate/60" />
+                    )}
+                  </div>
+                  <span className={`text-[10px] text-center leading-tight ${
+                    isCompleted ? 'text-aura-mint font-medium' : 'text-aura-slate/60'
+                  }`}>
+                    {rec.title.split(' ')[0]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-center text-xs text-aura-slate/50 mt-2">
+            {completedTasks.length}/{recommendations.length} выполнено
+          </p>
         </div>
       </div>
 
@@ -541,6 +612,29 @@ export function BioClock({ userName }: BioClockProps) {
                 ) : (
                   selectedRec.content.buttonText
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 left-4 right-4 z-50 animate-slide-down">
+          <div className="bg-gradient-to-r from-aura-mint to-aura-lavender rounded-2xl p-4 shadow-lg">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <Sparkles size={20} className="text-white" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-white">{toast.title}</h4>
+                <p className="text-sm text-white/90 mt-0.5">{toast.message}</p>
+              </div>
+              <button
+                onClick={() => setToast(null)}
+                className="text-white/60 hover:text-white"
+              >
+                <X size={18} />
               </button>
             </div>
           </div>
