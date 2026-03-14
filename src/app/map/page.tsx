@@ -399,7 +399,7 @@ function AuraRadarChart({ axes }: { axes: AuraAxis[] }) {
       {/* Подписи осей */}
       {axes.map((axis, i) => {
         const angle = (Math.PI * 2 * i) / axes.length - Math.PI / 2;
-        const labelRadius = maxRadius + 35;
+        const labelRadius = maxRadius + 45;
         const x = center + labelRadius * Math.cos(angle);
         const y = center + labelRadius * Math.sin(angle);
         const Icon = axis.icon;
@@ -407,15 +407,15 @@ function AuraRadarChart({ axes }: { axes: AuraAxis[] }) {
         return (
           <div
             key={i}
-            className="absolute flex flex-col items-center"
+            className="absolute flex flex-col items-center pointer-events-none"
             style={{
               left: x,
               top: y,
               transform: 'translate(-50%, -50%)'
             }}
           >
-            <div className={`h-7 w-7 rounded-lg flex items-center justify-center mb-1 ${axis.bgClass}`}>
-              <Icon size={14} className={axis.colorClass} />
+            <div className={`h-6 w-6 rounded-lg flex items-center justify-center ${axis.bgClass}`}>
+              <Icon size={12} className={axis.colorClass} />
             </div>
             <span className="text-[10px] text-aura-slate/70 text-center whitespace-nowrap">
               {axis.shortName}
@@ -649,12 +649,12 @@ export default function MapPage() {
 
       {/* Axis Detail Modal */}
       {selectedAxis && (
-        <div className="fixed inset-0 z-50 flex items-end">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center px-5">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setSelectedAxis(null)}
           />
-          <div className="relative w-full bg-white rounded-t-3xl p-5 animate-slide-up safe-area-bottom">
+          <div className="relative w-full max-w-md bg-white rounded-3xl p-5 animate-scale-in">
             <div className="flex items-start gap-4 mb-4">
               <div className={`h-14 w-14 rounded-xl flex items-center justify-center ${selectedAxis.bgClass}`}>
                 <selectedAxis.icon size={28} className={selectedAxis.colorClass} />
