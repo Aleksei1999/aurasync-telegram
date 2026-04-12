@@ -28,6 +28,7 @@ interface TelegramContextType {
   showConfirm: (message: string) => Promise<boolean>;
   close: () => void;
   expand: () => void;
+  shareUrl: (url: string, text?: string) => void;
 }
 
 const TelegramContext = createContext<TelegramContextType>({
@@ -46,6 +47,7 @@ const TelegramContext = createContext<TelegramContextType>({
   showConfirm: async () => false,
   close: () => {},
   expand: () => {},
+  shareUrl: () => {},
 });
 
 declare global {
@@ -246,6 +248,17 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
     webApp?.expand();
   };
 
+  const shareUrl = (url: string, text?: string) => {
+    const shareText = text ? encodeURIComponent(text) : '';
+    const shareLink = `https://t.me/share/url?url=${encodeURIComponent(url)}${shareText ? `&text=${shareText}` : ''}`;
+
+    if (webApp) {
+      webApp.openTelegramLink(shareLink);
+    } else {
+      window.open(shareLink, '_blank');
+    }
+  };
+
   return (
     <TelegramContext.Provider
       value={{
@@ -264,6 +277,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
         showConfirm,
         close,
         expand,
+        shareUrl,
       }}
     >
       {children}
