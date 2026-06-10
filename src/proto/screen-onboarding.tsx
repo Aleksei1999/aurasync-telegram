@@ -5,6 +5,7 @@ import { IconChevron, IconCheckSmall, IconArrow } from './icons';
 import { StarrySky, PineSilhouettes, Particles, BreathingCircle, ProgressDots, PrimaryButton, Sparkle, Icon3D } from './primitives';
 import { MoonFox, FoxAvatar } from './mascot';
 import { MAIN_PAINS, PAIN_PROGRAMS } from './data';
+import { saveOnboarding } from '@/lib/store';
 
 // AuraSync — Full onboarding (20 screens per spec 01.1)
 
@@ -125,6 +126,7 @@ export function OnboardingScreen({ onDone, setUser, initialStep = 0, initialData
   }, [step, generated, forcedGenerated]);
 
   const finish = () => {
+    try { saveOnboarding(data); } catch (e) {}
     setUser && setUser({ name: data.name, tone: data.tone, pain: data.pain?.id || 'anxiety' });
     onDone();
   };

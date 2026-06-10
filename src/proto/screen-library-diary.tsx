@@ -4,6 +4,7 @@ import React from 'react';
 import { IconPlay, IconClose, IconCheckSmall, IconSearch, IconBookmark, IconMic, IconEdit, IconArrow, IconLock, IconClock } from './icons';
 import { StarrySky, Particles, Sparkle, PrimaryButton, HeaderBar } from './primitives';
 import { SAMPLE_TRACKS, SAMPLE_DIARY } from './data';
+import { saveCheckin, getTodayCheckin, addDiary, getDiary, todayKey } from '@/lib/store';
 
 // AuraSync — Library + Diary
 
@@ -1944,14 +1945,43 @@ export function CheckInCard({ picked, onPick, onOpenWrite }) {
   const handleBadDay = (e) => {
     setBadDay(true);
     setSaved(true);
+    saveCheckin({ date: todayKey(), emotion, note: noteText, badDay: true });
     if (window.__awardStars) window.__awardStars(5, e.currentTarget, 'честность');
   };
   const handleSave = (e) => {
     if (saved) return;
+    saveCheckin({
+      date: todayKey(), energy, mood, stress, emotion, note: noteText, badDay,
+      extra: { bodyTension, drain, fuel, selfContact, movement, screen, sleepQ, sleepH, weekRate, weekWish },
+    });
     setSaved(true);
     if (emotion) onPick(emotionMeta.label.toLowerCase());
     if (window.__awardStars) window.__awardStars(10, e.currentTarget, 'чек-ин');
   };
+
+  // Hydrate today's check-in from storage on mount
+  React.useEffect(() => {
+    const t = getTodayCheckin();
+    if (!t) return;
+    if (t.energy != null)  setEnergy(t.energy);
+    if (t.mood != null)    setMood(t.mood);
+    if (t.stress != null)  setStress(t.stress);
+    if (t.emotion != null) setEmotion(t.emotion);
+    if (t.note != null)    setNoteText(t.note);
+    if (t.badDay != null)  setBadDay(t.badDay);
+    const ex = t.extra || {};
+    if (ex.bodyTension != null) setBodyTension(ex.bodyTension);
+    if (ex.drain != null)       setDrain(ex.drain);
+    if (ex.fuel != null)        setFuel(ex.fuel);
+    if (ex.selfContact != null) setSelfContact(ex.selfContact);
+    if (ex.movement != null)    setMovement(ex.movement);
+    if (ex.screen != null)      setScreen(ex.screen);
+    if (ex.sleepQ != null)      setSleepQ(ex.sleepQ);
+    if (ex.sleepH != null)      setSleepH(ex.sleepH);
+    if (ex.weekRate != null)    setWeekRate(ex.weekRate);
+    if (ex.weekWish != null)    setWeekWish(ex.weekWish);
+    setSaved(true);
+  }, []);
 
   // — derived helpers —
   const handleEmotion = (id) => { setEmotion(id); setSaved(false); };
@@ -2865,10 +2895,30 @@ export const SENTIMENT_COLOR = {
   благодарность:'#F4D58A',
 };
 
+// Map a stored diary entry { id, text, tags, emotion, at } → timeline card shape
+function mapSavedDiary(e) {
+  const d = new Date(e.at);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const SHORT_DOW = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
+  const dow = SHORT_DOW[d.getDay()] || '';
+  const when = dow ? `${dow} · ${hh}:${mm}` : `${hh}:${mm}`;
+  const tag = (e.tags && e.tags.length) ? e.tags[0] : '';
+  return {
+    id: e.id, when, emoji: '📝', tag, text: e.text,
+    sentiment: e.emotion || 'нежность',
+  };
+}
+
 export function EntriesTimeline() {
+  const [entries, setEntries] = React.useState([]);
+  React.useEffect(() => { setEntries(getDiary()); }, []);
+
+  const items = [...entries.map(mapSavedDiary), ...EXTENDED_DIARY];
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {EXTENDED_DIARY.map(d => {
+      {items.map(d => {
         const c = SENTIMENT_COLOR[d.sentiment] || '#BFB2F0';
         return (
           <div key={d.id} style={{
@@ -3019,7 +3069,10 @@ export function DiaryWriteModal({ onClose, onSave }) {
           }}>
             <IconMic size={16} color="var(--ink)"/>
           </button>
-          <PrimaryButton variant="inkOnLight" size="md" onClick={onSave}>
+          <PrimaryButton variant="inkOnLight" size="md" onClick={() => {
+            addDiary({ text, tags: [], emotion: null });
+            if (onSave) onSave();
+          }}>
             Сохранить
           </PrimaryButton>
         </div>

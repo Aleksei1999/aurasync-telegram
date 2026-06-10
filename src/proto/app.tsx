@@ -10,6 +10,7 @@ import { TodayScreen, PlayerScreen } from './screen-today';
 import { LibraryScreen, DiaryScreen, DiaryWriteModal, AnalysisScreen } from './screen-library-diary';
 import { EmotionsScreen } from './screen-emotions';
 import { ProfileScreen, SundayModal } from './screen-profile-sunday';
+import { isOnboarded } from '@/lib/store';
 
 // AuraSync — App shell, tabs, tweaks
 
@@ -94,8 +95,7 @@ function AppInner({ onModeChange, userName }) {
   // First-run: show onboarding unless it was completed before
   React.useEffect(() => {
     try {
-      const done = window.localStorage.getItem('aura_onboarding_completed') === 'true';
-      setOnboarded(done);
+      setOnboarded(isOnboarded());
     } catch (e) {}
   }, []);
 

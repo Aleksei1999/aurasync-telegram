@@ -1,6 +1,7 @@
 // @ts-nocheck
 'use client';
 import React from 'react';
+import { getStars, setStars as persistStars, addStarTxn } from '@/lib/store';
 
 // AuraSync — Stars system + flying-star animation
 // Global stars state, award flow, and the animation layer.
@@ -8,7 +9,9 @@ import React from 'react';
 export const StarsContext = React.createContext(null);
 
 export function StarsProvider({ children, initial = 1365 }) {
-  const [stars, setStars] = React.useState(initial);
+  const [stars, setStars] = React.useState(() => {
+    try { return getStars(initial); } catch (e) { return initial; }
+  });
   const [bursts, setBursts] = React.useState([]);   // {id, fromX, fromY, amount, label}
   const [pulse, setPulse] = React.useState(0);
   const pillRef = React.useRef(null);
@@ -26,6 +29,7 @@ export function StarsProvider({ children, initial = 1365 }) {
     setTimeout(() => {
       setStars(s => s + amount);
       setPulse(p => p + 1);
+      try { addStarTxn(amount, label); } catch (e) {}
     }, 650);
     setTimeout(() => {
       setBursts(b => b.filter(x => x.id !== id));
@@ -37,6 +41,11 @@ export function StarsProvider({ children, initial = 1365 }) {
     window.__awardStars = (amount, fromEl, label) => award(amount, fromEl, label);
     return () => { try { delete window.__awardStars; } catch (e) {} };
   }, [award]);
+
+  // Persist the balance whenever it changes
+  React.useEffect(() => {
+    try { persistStars(stars); } catch (e) {}
+  }, [stars]);
 
   const ctx = { stars, award, pillRef, pulse };
   return (
