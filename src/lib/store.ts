@@ -48,6 +48,7 @@ export interface OnboardingAnswers {
 export function saveOnboarding(answers: OnboardingAnswers): void {
   write('onboarding', { ...answers, savedAt: Date.now() });
   write('onboarding_completed', true);
+  post('onboarding', answers);
 }
 
 export function getOnboarding(): OnboardingAnswers | null {
@@ -100,6 +101,7 @@ export function saveCheckin(entry: Omit<Checkin, 'at'> & { at?: number }): Check
   const list = getCheckins().filter((c) => c.date !== full.date);
   list.unshift(full);
   write('checkins', list.slice(0, 400));
+  post('checkin', full);
   return full;
 }
 
@@ -128,6 +130,7 @@ export function addDiary(entry: Omit<DiaryEntry, 'id' | 'at'> & { id?: string; a
   const list = getDiary();
   list.unshift(full);
   write('diary', list.slice(0, 500));
+  post('diary', { text: full.text, tags: full.tags, emotion: full.emotion });
   return full;
 }
 
@@ -156,4 +159,100 @@ export function addStarTxn(amount: number, label?: string): void {
   const list = getLedger();
   list.unshift({ amount, label, at: Date.now() });
   write('stars_ledger', list.slice(0, 200));
+  post('stars', { amount, label });
 }
+
+/* ─── Server sync (Supabase via /api/data) ───────────────── */
+
+interface PullResponse {
+  onboarding: OnboardingAnswers | null;
+  onboardingCompleted: boolean;
+  stars: number | null;
+  checkins: Checkin[];
+  diary: DiaryEntry[];
+  ledger: StarTxn[];
+}
+
+function getInitData(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    const tg = window.Telegram?.WebApp;
+    if (tg?.initData) return tg.initData;
+  } catch {
+    /* ignore */
+  }
+  // dev / outside Telegram — the API accepts this only when NODE_ENV=development
+  return 'mock_init_data';
+}
+
+// fire-and-forget write to the server; localStorage already holds the value
+function post(kind: string, payload: unknown): void {
+  if (typeof window === 'undefined') return;
+  try {
+    void fetch('/api/data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': getInitData(),
+      },
+      body: JSON.stringify({ kind, payload }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* offline — ignore */
+  }
+}
+
+// Pull the user's server data on startup and merge into the local cache.
+// Server wins on conflicts; local-only items are preserved AND pushed up,
+// so nothing is lost (e.g. data created before the server existed).
+export async function pullAll(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  let data: PullResponse | null = null;
+  try {
+    const res = await fetch('/api/data', {
+      headers: { 'X-Telegram-Init-Data': getInitData() },
+    });
+    if (!res.ok) return;
+    data = (await res.json()) as PullResponse;
+  } catch {
+    return;
+  }
+  if (!data) return;
+
+  // ── check-ins: union by date, server wins ──
+  const localC = getCheckins();
+  const serverC = data.checkins || [];
+  const serverDates = new Set(serverC.map((c) => c.date));
+  const localOnlyC = localC.filter((c) => !serverDates.has(c.date));
+  const byDate = new Map<string, Checkin>();
+  for (const c of localC) byDate.set(c.date, c);
+  for (const c of serverC) byDate.set(c.date, c);
+  const mergedC = Array.from(byDate.values()).sort((a, b) => (b.at || 0) - (a.at || 0));
+  write('checkins', mergedC.slice(0, 400));
+
+  // ── diary: union by id ──
+  const localD = getDiary();
+  const serverD = data.diary || [];
+  const serverIds = new Set(serverD.map((d) => d.id));
+  const localOnlyD = localD.filter((d) => !serverIds.has(d.id));
+  const mergedD = [...serverD, ...localOnlyD].sort((a, b) => (b.at || 0) - (a.at || 0));
+  write('diary', mergedD.slice(0, 500));
+
+  // ── stars: server is source of truth when present ──
+  if (typeof data.stars === 'number') write('stars', data.stars);
+  if (Array.isArray(data.ledger) && data.ledger.length) {
+    write('stars_ledger', data.ledger.slice(0, 200));
+  }
+
+  // ── onboarding ──
+  if (data.onboardingCompleted) {
+    write('onboarding_completed', true);
+    if (data.onboarding) write('onboarding', data.onboarding);
+  }
+
+  // push local-only items up so the server catches up
+  for (const c of localOnlyC) post('checkin', c);
+  for (const d of localOnlyD) post('diary', { text: d.text, tags: d.tags, emotion: d.emotion });
+}
+
