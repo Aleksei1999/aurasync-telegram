@@ -8,7 +8,7 @@ import { getStars, setStars as persistStars, addStarTxn } from '@/lib/store';
 
 export const StarsContext = React.createContext(null);
 
-export function StarsProvider({ children, initial = 1365 }) {
+export function StarsProvider({ children, initial = 0 }) {
   const [stars, setStars] = React.useState(() => {
     try { return getStars(initial); } catch (e) { return initial; }
   });
@@ -46,6 +46,13 @@ export function StarsProvider({ children, initial = 1365 }) {
   React.useEffect(() => {
     try { persistStars(stars); } catch (e) {}
   }, [stars]);
+
+  // Re-read the balance after a server sync (pullAll) lands
+  React.useEffect(() => {
+    const onSync = () => { try { setStars(s => getStars(s)); } catch (e) {} };
+    window.addEventListener('aura:store-updated', onSync);
+    return () => window.removeEventListener('aura:store-updated', onSync);
+  }, []);
 
   const ctx = { stars, award, pillRef, pulse };
   return (

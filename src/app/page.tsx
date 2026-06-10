@@ -46,6 +46,7 @@ export default function HomePage() {
   }, []);
 
   const userName = profile?.first_name || user?.first_name;
+  const userPhoto = profile?.photo_url || user?.photo_url;
 
   const handleModeChange = () => {
     try {
@@ -58,7 +59,7 @@ export default function HomePage() {
 
   return (
     <main style={{ position: 'fixed', inset: 0, overflow: 'hidden', background: '#15113A' }}>
-      <App userName={userName} onModeChange={handleModeChange} />
+      <App userName={userName} userPhoto={userPhoto} onModeChange={handleModeChange} />
     </main>
   );
 }

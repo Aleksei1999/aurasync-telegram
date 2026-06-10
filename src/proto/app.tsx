@@ -74,17 +74,17 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 
 const IS_DEV = process.env.NODE_ENV === 'development';
 
-export function App({ onModeChange, userName }) {
+export function App({ onModeChange, userName, userPhoto }) {
   return (
-    <StarsProvider initial={1365}>
-      <AppInner onModeChange={onModeChange} userName={userName}/>
+    <StarsProvider initial={0}>
+      <AppInner onModeChange={onModeChange} userName={userName} userPhoto={userPhoto}/>
     </StarsProvider>
   );
 }
 
-function AppInner({ onModeChange, userName }) {
+function AppInner({ onModeChange, userName, userPhoto }) {
   const [onboarded, setOnboarded] = React.useState(true);
-  const [user, setUser] = React.useState({ name: userName || 'Анна', tone: 'вы', pain: 'anxiety' });
+  const [user, setUser] = React.useState({ name: userName || 'Анна', tone: 'вы', pain: 'anxiety', photo: userPhoto || null });
   const [tab, setTab] = React.useState('today');
   const [player, setPlayer] = React.useState(null);
   const [diaryWrite, setDiaryWrite] = React.useState(false);
@@ -99,10 +99,13 @@ function AppInner({ onModeChange, userName }) {
     } catch (e) {}
   }, []);
 
-  // Keep the user's name in sync with the Telegram profile name
+  // Keep the user's name + photo in sync with the Telegram profile
   React.useEffect(() => {
     if (userName) setUser(prev => ({ ...prev, name: userName }));
   }, [userName]);
+  React.useEffect(() => {
+    if (userPhoto) setUser(prev => ({ ...prev, photo: userPhoto }));
+  }, [userPhoto]);
 
   // status bar always uses light text on the dark night/dawn backgrounds
   React.useEffect(() => {

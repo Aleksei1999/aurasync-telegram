@@ -288,5 +288,12 @@ export async function pullAll(): Promise<void> {
   for (const c of localOnlyC) post('checkin', c);
   for (const d of localOnlyD) post('diary', { text: d.text, tags: d.tags, emotion: d.emotion });
   for (const k of localOnlyState) post('state', { key: k, value: getState(k, null) });
+
+  // notify mounted components (e.g. the stars balance) to re-read the cache
+  try {
+    window.dispatchEvent(new Event('aura:store-updated'));
+  } catch {
+    /* ignore */
+  }
 }
 

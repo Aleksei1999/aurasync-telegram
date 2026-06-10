@@ -81,9 +81,18 @@ export function ProfileScreen({ user, onReplayOnboarding, onAwardDemo }) {
             background: 'linear-gradient(135deg, #BFB2F0, #F4D58A)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 8px 22px rgba(124,107,217,0.40), inset 0 2px 8px rgba(255,255,255,0.40)',
-            padding: 0,
+            padding: 0, overflow: 'hidden',
           }}>
-            <FoxAvatar size={64}/>
+            {user.photo ? (
+              <img
+                src={user.photo}
+                alt={user.name}
+                referrerPolicy="no-referrer"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 36 }}
+              />
+            ) : (
+              <FoxAvatar size={64}/>
+            )}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="eyebrow" style={{ letterSpacing: 0.6 }}>· профиль</div>

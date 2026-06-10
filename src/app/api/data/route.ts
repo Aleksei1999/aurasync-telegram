@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
         .eq('telegram_id', tid)
         .maybeSingle();
 
-      const base = typeof row?.stars === 'number' ? row.stars : 1365;
+      const base = typeof row?.stars === 'number' ? row.stars : 0;
       const next = base + amount;
 
       const [{ error: upErr }, { error: ledErr }] = await Promise.all([
