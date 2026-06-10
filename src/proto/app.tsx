@@ -150,8 +150,8 @@ function AppInner({ onModeChange, userName }) {
           />
         )}
         {tab === 'library' && <LibraryScreen onOpenPlayer={openPlayer}/>}
-        {tab === 'diary'   && <DiaryScreen onOpenWrite={() => setDiaryWrite(true)}/>}
-        {tab === 'map'      && <EmotionsScreen onOpenCompass={() => {}}/>}
+        {tab === 'diary'   && <DiaryScreen onOpenWrite={() => setDiaryWrite(true)} onOpenMap={() => setTab('map')}/>}
+        {tab === 'map'      && <EmotionsScreen onOpenCompass={() => {}} onClose={() => setTab('diary')}/>}
         {tab === 'analysis' && <AnalysisScreen/>}
         {tab === 'profile' && <ProfileScreen user={user} onReplayOnboarding={() => setOnboarded(false)} onAwardDemo={(e) => window.__awardStars && window.__awardStars(50, e.currentTarget, 'демо')}/>}
       </div>

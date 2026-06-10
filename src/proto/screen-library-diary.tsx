@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client';
 import React from 'react';
-import { IconPlay, IconClose, IconCheckSmall, IconSearch, IconBookmark, IconMic, IconEdit, IconArrow, IconLock, IconClock } from './icons';
+import { IconPlay, IconClose, IconCheckSmall, IconSearch, IconBookmark, IconMic, IconEdit, IconArrow, IconLock, IconClock, IconCompass, IconChevron } from './icons';
 import { StarrySky, Particles, Sparkle, PrimaryButton, HeaderBar } from './primitives';
 import { SAMPLE_TRACKS, SAMPLE_DIARY } from './data';
 import { saveCheckin, getTodayCheckin, addDiary, getDiary, todayKey, getState, setState } from '@/lib/store';
@@ -536,7 +536,7 @@ export const EMOTIONS_THIS_WEEK = [
   { l: 'Прочее',       pct: 11, c: 'rgba(242,238,255,0.18)' },
 ];
 
-export function DiaryScreen({ onOpenWrite }) {
+export function DiaryScreen({ onOpenWrite, onOpenMap }) {
   const [picked, setPicked] = React.useState(null);
 
   return (
@@ -560,6 +560,32 @@ export function DiaryScreen({ onOpenWrite }) {
 
         {/* ── HERO CHECK-IN ── */}
         <CheckInCard picked={picked} onPick={setPicked} onOpenWrite={onOpenWrite}/>
+
+        {/* ── Entry: Emotion map ── */}
+        {onOpenMap && (
+          <button onClick={onOpenMap} style={{
+            width: '100%', marginTop: 16, padding: '14px 16px', borderRadius: 16,
+            background: 'linear-gradient(135deg, rgba(191,178,240,0.14), rgba(124,107,217,0.10))',
+            border: '1px solid rgba(191,178,240,0.22)', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
+            fontFamily: 'var(--sans)',
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 11, flexShrink: 0,
+              background: 'rgba(191,178,240,0.18)', border: '1px solid rgba(191,178,240,0.30)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <IconCompass size={16} color="#BFB2F0"/>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, color: 'var(--on-night)', fontWeight: 500 }}>Карта эмоций</div>
+              <div style={{ fontSize: 11, color: 'var(--on-night-3)', marginTop: 2, lineHeight: 1.4 }}>
+                8 базовых эмоций, оттенки и что делать с каждой
+              </div>
+            </div>
+            <IconChevron size={16} color="var(--on-night-3)"/>
+          </button>
+        )}
 
         {/* ── Recent entries ── */}
         <SectionDiary eyebrow="ЗАПИСИ" title="Ваша лента" action={`${EXTENDED_DIARY.length} записей`} marginTop={28}/>

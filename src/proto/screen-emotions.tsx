@@ -8,7 +8,7 @@ import { getState, setState } from '@/lib/store';
 
 // AuraSync — Emotions Map + Emotion Card
 
-export function EmotionsScreen({ onOpenCompass }) {
+export function EmotionsScreen({ onOpenCompass, onClose }) {
   const [openedBase, setOpenedBase] = React.useState(null);
   const [openCard, setOpenCard] = React.useState(null);
 
@@ -23,6 +23,18 @@ export function EmotionsScreen({ onOpenCompass }) {
         position: 'relative', height: '100%', overflowY: 'auto', overflowX: 'hidden',
         padding: '54px 22px 116px',
       }}>
+        {onClose && (
+          <button onClick={onClose} style={{
+            display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14,
+            padding: '7px 13px 7px 9px', borderRadius: 99,
+            background: 'rgba(242,238,255,0.10)', border: '1px solid rgba(242,238,255,0.18)',
+            fontSize: 12, color: 'var(--on-night)', fontWeight: 500, cursor: 'pointer',
+            fontFamily: 'var(--sans)',
+          }}>
+            <IconChevron size={15} color="var(--on-night)" style={{ transform: 'rotate(180deg)' }}/>
+            назад
+          </button>
+        )}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
             <div className="eyebrow">· Карта эмоций</div>
