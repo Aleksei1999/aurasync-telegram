@@ -4,7 +4,7 @@ import React from 'react';
 import { IconPlay, IconClose, IconCheckSmall, IconSearch, IconBookmark, IconMic, IconEdit, IconArrow, IconLock, IconClock } from './icons';
 import { StarrySky, Particles, Sparkle, PrimaryButton, HeaderBar } from './primitives';
 import { SAMPLE_TRACKS, SAMPLE_DIARY } from './data';
-import { saveCheckin, getTodayCheckin, addDiary, getDiary, todayKey } from '@/lib/store';
+import { saveCheckin, getTodayCheckin, addDiary, getDiary, todayKey, getState, setState } from '@/lib/store';
 
 // AuraSync — Library + Diary
 
@@ -1084,7 +1084,27 @@ export function DominantEmotionCard({ emotion, companion }) {
 }
 
 export function InsightCard({ text, age, saved: initialSaved }) {
-  const [saved, setSaved] = React.useState(initialSaved);
+  const insightKey = text;
+  const [saved, setSaved] = React.useState(() => {
+    const set = getState('saved_insights', []);
+    return insightKey != null ? set.includes(insightKey) : initialSaved;
+  });
+  const toggleSaved = () => {
+    setSaved(s => {
+      const next = !s;
+      if (insightKey != null) {
+        const set = getState('saved_insights', []);
+        let nextArr;
+        if (next) {
+          nextArr = set.includes(insightKey) ? set : [...set, insightKey];
+        } else {
+          nextArr = set.filter(k => k !== insightKey);
+        }
+        setState('saved_insights', nextArr);
+      }
+      return next;
+    });
+  };
   return (
     <div style={{
       padding: '16px 16px', borderRadius: 20, position: 'relative', overflow: 'hidden',
@@ -1122,7 +1142,7 @@ export function InsightCard({ text, age, saved: initialSaved }) {
         <div style={{
           marginTop: 14, display: 'flex', gap: 8,
         }}>
-          <button onClick={() => setSaved(s => !s)} style={{
+          <button onClick={toggleSaved} style={{
             padding: '7px 12px', borderRadius: 99,
             background: saved ? 'rgba(244,213,138,0.30)' : 'rgba(242,238,255,0.08)',
             border: `1px solid ${saved ? 'rgba(244,213,138,0.50)' : 'rgba(242,238,255,0.18)'}`,
@@ -1637,6 +1657,18 @@ export function PairBar({ label, value, color }) {
 // ═════════ Sub-screen 5 — История ═════════
 export function HistorySubscreen() {
   const d = ANALYSIS_DATA;
+  const persistedSaved = getState('saved_insights', []);
+  const aboutMe = (() => {
+    const seen = new Set();
+    const items = [];
+    d.insights.filter(i => i.saved).forEach(i => {
+      if (!seen.has(i.text)) { seen.add(i.text); items.push({ id: i.id, text: i.text }); }
+    });
+    persistedSaved.forEach((text, idx) => {
+      if (!seen.has(text)) { seen.add(text); items.push({ id: `saved-${idx}`, text }); }
+    });
+    return items;
+  })();
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ fontSize: 11.5, color: 'var(--on-night-2)', lineHeight: 1.5 }}>
@@ -1695,7 +1727,7 @@ export function HistorySubscreen() {
         border: '1px solid rgba(244,213,138,0.25)',
         display: 'flex', flexDirection: 'column', gap: 8,
       }}>
-        {d.insights.filter(i => i.saved).map(i => (
+        {aboutMe.map(i => (
           <div key={i.id} style={{
             padding: '10px 12px', borderRadius: 12,
             background: 'rgba(8,5,22,0.40)',

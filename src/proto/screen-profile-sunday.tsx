@@ -6,6 +6,7 @@ import { StarrySky, Particles, Icon3D, AreaChart, PrimaryButton, HeaderBar } fro
 import { FoxAvatar, MeditatingFox } from './mascot';
 import { SAMPLE_INSIGHTS, ACHIEVEMENTS } from './data';
 import { useStars } from './stars';
+import { getState, setState } from '@/lib/store';
 
 // AuraSync — Profile + Sunday Checkup Report
 
@@ -501,7 +502,7 @@ export const SHOP_ITEMS = {
 export function StarShop({ stars, onClose, award }) {
   const [cat, setCat] = React.useState('app');
   const items = SHOP_ITEMS[cat] || [];
-  const [bought, setBought] = React.useState({}); // id -> true
+  const [bought, setBought] = React.useState(() => getState('shop_bought', {})); // id -> true
 
   const handleBuy = (item, e) => {
     if (item.action === 'invite' || item.action === 'share' || item.price === 0) {
@@ -510,7 +511,11 @@ export function StarShop({ stars, onClose, award }) {
       return;
     }
     if (stars < item.price || bought[item.id]) return;
-    setBought(b => ({ ...b, [item.id]: true }));
+    setBought(b => {
+      const nextMap = { ...b, [item.id]: true };
+      setState('shop_bought', nextMap);
+      return nextMap;
+    });
     if (window.__awardStars) {
       // Deduct by giving negative + show "обменено" — but simpler: just deduct via negative award
       window.__awardStars(-item.price, e.currentTarget, 'обмен');
@@ -737,8 +742,13 @@ export function ShopItemCard({ item, stars, bought, onBuy }) {
 // ═══════════════════════════════════════════════════════════════
 export function SundayModal({ user, onClose }) {
   const [phase, setPhase] = React.useState('intro');
-  const [overall, setOverall] = React.useState(7);
-  const [vsLast, setVsLast]   = React.useState(null);
+  const _saved = getState('weekly_last', null);
+  const [overall, setOverall] = React.useState(_saved && _saved.overall != null ? _saved.overall : 7);
+  const [vsLast, setVsLast]   = React.useState(_saved && _saved.vsLast != null ? _saved.vsLast : null);
+
+  const saveWeekly = (next) => {
+    setState('weekly_last', { overall, vsLast, at: Date.now(), ...next });
+  };
 
   return (
     <div className="bg-dawn" style={{
@@ -801,7 +811,7 @@ export function SundayModal({ user, onClose }) {
               <div className="serif" style={{ fontSize: 56, textAlign: 'center', color: 'var(--lav-500)' }}>{overall}</div>
               <div style={{ fontSize: 11, textAlign: 'center', color: 'var(--text-3)', marginTop: 2 }}>из 10</div>
               <input type="range" min={1} max={10} value={overall}
-                onChange={e => setOverall(+e.target.value)}
+                onChange={e => { setOverall(+e.target.value); saveWeekly({ overall: +e.target.value }); }}
                 style={{ width: '100%', marginTop: 18, accentColor: 'var(--lav-400)' }}/>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-3)', marginTop: 8 }}>
                 <span>очень тяжело</span><span>нейтрально</span><span>очень хорошо</span>
@@ -830,7 +840,7 @@ export function SundayModal({ user, onClose }) {
               {['Заметно лучше', 'Немного лучше', 'Так же', 'Немного хуже', 'Заметно хуже', 'Не помню, как было'].map(o => {
                 const on = vsLast === o;
                 return (
-                  <button key={o} onClick={() => setVsLast(o)} style={{
+                  <button key={o} onClick={() => { setVsLast(o); saveWeekly({ vsLast: o }); }} style={{
                     padding: '14px 16px', borderRadius: 14,
                     background: on ? 'var(--cream-2)' : 'rgba(242,238,255,0.10)',
                     color: on ? 'var(--ink)' : 'var(--on-night)',

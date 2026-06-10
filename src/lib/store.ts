@@ -162,6 +162,32 @@ export function addStarTxn(amount: number, label?: string): void {
   post('stars', { amount, label });
 }
 
+/* ─── Generic per-user state (saved insights, bookmarks, shop, …) ─ */
+
+export function getState<T>(key: string, fallback: T): T {
+  return read<T>('state:' + key, fallback);
+}
+
+export function setState(key: string, value: unknown): void {
+  write('state:' + key, value);
+  post('state', { key, value });
+}
+
+function localStateKeys(): string[] {
+  if (typeof window === 'undefined') return [];
+  const out: string[] = [];
+  const p = PREFIX + 'state:';
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && k.startsWith(p)) out.push(k.slice(p.length));
+    }
+  } catch {
+    /* ignore */
+  }
+  return out;
+}
+
 /* ─── Server sync (Supabase via /api/data) ───────────────── */
 
 interface PullResponse {
@@ -171,6 +197,7 @@ interface PullResponse {
   checkins: Checkin[];
   diary: DiaryEntry[];
   ledger: StarTxn[];
+  state: Record<string, unknown>;
 }
 
 function getInitData(): string {
@@ -251,8 +278,15 @@ export async function pullAll(): Promise<void> {
     if (data.onboarding) write('onboarding', data.onboarding);
   }
 
+  // ── generic state: server wins, local-only keys pushed up ──
+  const serverState = data.state || {};
+  for (const [k, v] of Object.entries(serverState)) write('state:' + k, v);
+  const serverStateKeys = new Set(Object.keys(serverState));
+  const localOnlyState = localStateKeys().filter((k) => !serverStateKeys.has(k));
+
   // push local-only items up so the server catches up
   for (const c of localOnlyC) post('checkin', c);
   for (const d of localOnlyD) post('diary', { text: d.text, tags: d.tags, emotion: d.emotion });
+  for (const k of localOnlyState) post('state', { key: k, value: getState(k, null) });
 }
 

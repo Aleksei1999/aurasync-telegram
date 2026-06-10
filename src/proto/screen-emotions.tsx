@@ -4,6 +4,7 @@ import React from 'react';
 import { IconCompass, IconChevron, IconArrow, IconBookmark, IconShare, IconHeart } from './icons';
 import { StarrySky, Particles, PlutchikWheel, Icon3D, HeaderBar, PrimaryButton } from './primitives';
 import { EMOTION_CARDS, RESENTMENT_CARD } from './data';
+import { getState, setState } from '@/lib/store';
 
 // AuraSync — Emotions Map + Emotion Card
 
@@ -162,6 +163,29 @@ export function EmotionsScreen({ onOpenCompass }) {
 
 // ─── Emotion card view ───────────────────────────────────
 export function EmotionCardView({ card, onClose }) {
+  const emotionKey = card.id || card.label;
+
+  const [bookmarked, setBookmarked] = React.useState(
+    () => getState('emotion_bookmarks', []).includes(emotionKey)
+  );
+  const [felt, setFelt] = React.useState(false);
+
+  const toggleBookmark = () => {
+    const list = getState('emotion_bookmarks', []);
+    const has = list.includes(emotionKey);
+    const next = has ? list.filter((k) => k !== emotionKey) : [...list, emotionKey];
+    setState('emotion_bookmarks', next);
+    setBookmarked(!has);
+  };
+
+  const feelNow = (e) => {
+    const log = getState('emotion_feel_log', []);
+    const next = [...log, { id: emotionKey, at: Date.now() }].slice(-100);
+    setState('emotion_feel_log', next);
+    if (window.__awardStars) window.__awardStars(5, e.currentTarget, 'эмоция');
+    setFelt(true);
+  };
+
   return (
     <div className="bg-night" style={{
       position: 'absolute', inset: 0, zIndex: 90, overflow: 'hidden',
@@ -175,11 +199,11 @@ export function EmotionCardView({ card, onClose }) {
         <HeaderBar title="Карта эмоций" onBack={onClose}
           action={
             <div style={{ display: 'flex', gap: 8 }}>
-              <button style={{
+              <button onClick={toggleBookmark} style={{
                 width: 36, height: 36, borderRadius: 18,
                 background: 'rgba(242,238,255,0.10)', border: 'none', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}><IconBookmark size={14} color="var(--on-night)"/></button>
+              }}><IconBookmark size={14} color={bookmarked ? '#FFD993' : 'var(--on-night)'} fill={bookmarked ? '#FFD993' : 'none'}/></button>
               <button style={{
                 width: 36, height: 36, borderRadius: 18,
                 background: 'rgba(242,238,255,0.10)', border: 'none', cursor: 'pointer',
@@ -298,8 +322,8 @@ export function EmotionCardView({ card, onClose }) {
         </div>
 
         <div style={{ marginTop: 18 }}>
-          <PrimaryButton variant="inkOnLight" size="md">
-            <IconHeart size={14} color="#FFF9E0"/> Я чувствую это сейчас
+          <PrimaryButton variant="inkOnLight" size="md" onClick={feelNow}>
+            <IconHeart size={14} color="#FFF9E0"/> {felt ? 'Отмечено' : 'Я чувствую это сейчас'}
           </PrimaryButton>
         </div>
 

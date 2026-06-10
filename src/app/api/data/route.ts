@@ -41,6 +41,22 @@ export async function GET(request: NextRequest) {
 
     const profile = profileRes.data;
 
+    // generic state lives in aura_profiles.state (jsonb). Fetch tolerantly so
+    // a missing column (pre-migration) never breaks the rest of the payload.
+    let state: Record<string, unknown> = {};
+    try {
+      const stateRes = await supabase
+        .from('aura_profiles')
+        .select('state')
+        .eq('telegram_id', tid)
+        .maybeSingle();
+      if (!stateRes.error && stateRes.data?.state && typeof stateRes.data.state === 'object') {
+        state = stateRes.data.state as Record<string, unknown>;
+      }
+    } catch {
+      /* column not present yet — leave state empty */
+    }
+
     const checkins = (checkinsRes.data || []).map((c) => ({
       date: c.date,
       energy: c.energy ?? undefined,
@@ -74,6 +90,7 @@ export async function GET(request: NextRequest) {
       checkins,
       diary,
       ledger,
+      state,
     });
   } catch (error) {
     console.error('GET /api/data error:', error);
@@ -159,6 +176,29 @@ export async function POST(request: NextRequest) {
           current_mood: p?.emotion ?? null,
           updated_at: new Date().toISOString(),
         })
+        .eq('telegram_id', tid);
+      if (error) throw error;
+      return NextResponse.json({ ok: true });
+    }
+
+    if (kind === 'state') {
+      const p = payload || {};
+      const stateKey = String(p.key || '');
+      if (!stateKey) {
+        return NextResponse.json({ error: 'Missing state key' }, { status: 400 });
+      }
+      // merge {key:value} into aura_profiles.state (read-modify-write)
+      const { data: row } = await supabase
+        .from('aura_profiles')
+        .select('state')
+        .eq('telegram_id', tid)
+        .maybeSingle();
+      const current =
+        row?.state && typeof row.state === 'object' ? (row.state as Record<string, unknown>) : {};
+      const merged = { ...current, [stateKey]: p.value };
+      const { error } = await supabase
+        .from('aura_profiles')
+        .update({ state: merged, updated_at: new Date().toISOString() })
         .eq('telegram_id', tid);
       if (error) throw error;
       return NextResponse.json({ ok: true });
