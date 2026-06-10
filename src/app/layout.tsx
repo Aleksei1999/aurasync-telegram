@@ -1,17 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { TelegramProvider } from "@/components/TelegramProvider";
 import { AuthProvider } from "@/components/AuthProvider";
 import Script from "next/script";
 
-const inter = Inter({
-  subsets: ["latin", "cyrillic"],
-});
-
 export const metadata: Metadata = {
   title: "AuraSync",
-  description: "Your personal hormonal wellness manager",
+  description: "Медитации и дневник эмоций",
 };
 
 export const viewport: Viewport = {
@@ -35,7 +30,7 @@ export default function RootLayout({
           strategy="beforeInteractive"
         />
       </head>
-      <body className={`${inter.className} antialiased`}>
+      <body className="antialiased">
         <TelegramProvider>
           <AuthProvider>
             {children}
