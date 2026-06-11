@@ -10,7 +10,7 @@ import { TodayScreen, PlayerScreen } from './screen-today';
 import { LibraryScreen, DiaryScreen, DiaryWriteModal, AnalysisScreen } from './screen-library-diary';
 import { EmotionsScreen } from './screen-emotions';
 import { ProfileScreen, SundayModal } from './screen-profile-sunday';
-import { isOnboarded } from '@/lib/store';
+import { isOnboarded, setOnboardedFlag } from '@/lib/store';
 
 // AuraSync — App shell, tabs, tweaks
 
@@ -113,7 +113,7 @@ function AppInner({ onModeChange, userName, userPhoto }) {
   }, [onModeChange]);
 
   const finishOnboarding = () => {
-    try { window.localStorage.setItem('aura_onboarding_completed', 'true'); } catch (e) {}
+    try { setOnboardedFlag(); } catch (e) {}
     setOnboarded(true);
   };
 

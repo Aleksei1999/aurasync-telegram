@@ -56,12 +56,14 @@ export function getOnboarding(): OnboardingAnswers | null {
 }
 
 export function isOnboarded(): boolean {
-  // honour both the new store flag and the legacy flag used before
-  return (
-    read<boolean>('onboarding_completed', false) === true ||
-    (typeof window !== 'undefined' &&
-      window.localStorage.getItem('aura_onboarding_completed') === 'true')
-  );
+  // Only the NEW onboarding counts. The legacy `aura_onboarding_completed`
+  // flag came from a different (old) app version and must NOT skip the new
+  // onboarding — otherwise users of the old build never see it.
+  return read<boolean>('onboarding_completed', false) === true;
+}
+
+export function setOnboardedFlag(): void {
+  write('onboarding_completed', true);
 }
 
 export function resetOnboarding(): void {
